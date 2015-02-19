@@ -763,6 +763,7 @@ void presetPatches(unsigned char prg) {
 		//oscillator1 to audioout
 		patchAudioOut[2][0] = 0;
 		patchAudioOut[2][1] = 1;
+		patchCtrlIn[2][0] = 200;
 
 	}
 	return;

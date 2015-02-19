@@ -47,12 +47,39 @@ void sendModulesInfo(void) {
 			MIDIout( modCtrlOutsName[id][i] );
 	}
 	MIDIout(0xF7);
-	MIDIout(0xFF);
 	return;
 	}
 
 void sendPatchDump(void) {
-	//To be implemented
+	int id, i;
+	unsigned char temp;
+	
+	MIDIout( 0xF0 );				// SysEx
+	MIDIout( OPMODMFG1 );
+	MIDIout( OPMODMFG2 );
+	MIDIout( OPMODMFG3 );
+	MIDIout( 0x08 );				// Patchdump
+	MIDIout( numberOfModules );		// Number of modules
+	for (id=0 ; id<numberOfModules ; id++) {
+		MIDIout( id );
+		MIDIout( patchGate[id] );
+		MIDIout( patchNote[id] );
+		for (i=0;i<MAXAUDIIN;i++)
+			MIDIout( patchAudioIn[id][i] );
+		for (i=0;i<MAXAUDIOUT;i++)
+			MIDIout( patchAudioOut[id][i] );
+		for (i=0;i<	MAXCTRLIN;i++) {
+			temp = patchCtrlIn[id][i];
+			MIDIout( temp&0x7F);
+			MIDIout( (temp/0x80)&0x7F);
+		}
+		for (i=0;i<	MAXCTRLIN;i++) {
+			temp = patchCtrlOut[id][i];
+			MIDIout( temp&0x7F);
+			MIDIout( (temp/0x80)&0x7F);
+		}
+	}
+	MIDIout( 0xF7 );
 	return;
 }
 
@@ -267,7 +294,6 @@ void mainOpenModular(void) {
 	clearBusses();
 
 	presetPatches(0);
-	sendModulesInfo();
 	
 	while(1) ;
 	

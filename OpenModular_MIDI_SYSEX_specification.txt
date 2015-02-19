@@ -99,11 +99,14 @@ patch module N
 
 
 patch module:
+ID number
 gate      0=connected to gate bus0 (first note pressed), 1= connected to gate bus1 (2nd note pressed) 2 = not connected
 note      0=connected to note bus0 (first note pressed), 1= connected to note bus1 (2nd note pressed) 2 = not connected
 audioin0  audio bus number
+..
 audioin3  audio bus number
 audioout0 audio bus number
+..
 audioout3 audio bus number
 ctrlin0   control bus number bit 6-0 (LSBs)
 ctrlin0   control bus number bit 14-7 (MSBs)
