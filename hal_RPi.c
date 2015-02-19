@@ -125,13 +125,37 @@ void MIDIout(unsigned char outbuf) {
 int AudioFIFOfull(void) {
 	return (pwmR[PWM_STA]&PWM_FULL1);
 }
+void loadLED(int s) {
+	if (s) {
+		// Set the GPIO16 output low ( Turn OK LED on )
+        gpioR[GPIO_GPCLR0] = (1 << 16);
+    } else {
+		// Set the GPIO16 output high ( Turn OK LED off )
+        gpioR[GPIO_GPSET0] = (1 << 16);
+	}
+	return;
+}
 
 void AudioOut(void) {
+	volatile static int c;
+	
 	int out;
 	out = (int)(audioPatchBus[0]*0x800)+0x800;
 	pwmR[PWM_FIF1] = out;
 	out = (int)(audioPatchBus[1]*0x800)+0x800;
 	pwmR[PWM_FIF1] = out;
+
+	c++;
+	if (c==22050) {
+		// Set the GPIO16 output low ( Turn OK LED on )
+        gpioR[GPIO_GPCLR0] = (1 << 16);
+	}
+	if (c>44100) {
+		c=0;
+		// Set the GPIO16 output high ( Turn OK LED off )
+        gpioR[GPIO_GPSET0] = (1 << 16);
+	}
+
 	return;
 }
 
@@ -152,7 +176,7 @@ int main(void) {
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
     gpioR[GPIO_GPFSEL1] |= (1 << 18);
-
+	
 	// Set GPIO 40 & 45 (Phone Jack) To Alternate PWM Function 0
 	gpioR[GPIO_GPFSEL4] = (GPIO_FSEL0_ALT0 + GPIO_FSEL5_ALT0);
 
@@ -195,6 +219,9 @@ int main(void) {
    	uartR[UART0_IMSC] = (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9) | (1 << 10);
     // Enable UART0, receive & transfer part of UART.
     uartR[UART0_CR] = (1 << 0) | (1 << 8) | (1 << 9);
-        
+
+    // Set the GPIO16 output low ( Turn OK LED on )
+    gpioR[GPIO_GPCLR0] = (1 << 16);
+
 	mainOpenModular();
 }

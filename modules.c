@@ -246,10 +246,10 @@ void module_LFO(int id) {
 		if (dir) COUT0++; else COUT0--;
 		counter=0;
 	}
-	if (COUT0 > CIN1) {
-		if (dir==0) dir=1;
-		else dir=0;
-	}
+	if (COUT0 == CIN1)
+		dir = 0;
+	if (COUT0 == 0)
+		dir = 1;
 	return;
 }
 void regModule_LFO(int id) {
@@ -261,7 +261,7 @@ void regModule_LFO(int id) {
 	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
 	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
 //               "        \0";
-	char name[9]="LFO     \0";
+	char name[9]="LFOTRI  \0";
 	
 	modCtrlIns[id]     = 2;
 	modCtrlOuts[id]    = 1;
@@ -401,6 +401,8 @@ void module_Sequencer(int id) {
 				break;
 			case 5:
 				note[0]=47;
+				note[1]=49;
+				gate[1]=100;
 				break;
 			case 6:
 				note[0]=42;
@@ -462,13 +464,13 @@ void module_Filter1(int id) {
 	if ((CIN0 != lastcin0) || (CIN1 != lastcin1)) {
 		lastcin0=CIN0; lastcin1=CIN1;
 		freqinhz = CIN0 * 3.90625;	// 0 to 1000Hz
-		frequency = freqinhz * (1.f/( SAMPLERATEF/2.0f));
+		frequency = freqinhz * (1.0/( SAMPLERATEF/2.0));
 		resonance = CIN1 / 256.0;	// 0 to 1
 				
-		q = 1.0f - frequency;
-		p = frequency + 0.8f * frequency * q;
-		f = p + p - 1.0f;
-		q = resonance * (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
+		q = 1.0 - frequency;
+		p = frequency + 0.8 * frequency * q;
+		f = p + p - 1.0;
+		q = resonance * (1.0 + 0.5 * q * (1.0 - q + 5.6 * q * q));
 	}
 
 	in = AIN0;
@@ -477,12 +479,12 @@ void module_Filter1(int id) {
 	t2 = b2;  b2 = (b1 + t1) * p - b2 * f;
 	t1 = b3;  b3 = (b2 + t2) * p - b3 * f;
 	b4 = (b3 + t1) * p - b4 * f;
-	b4 = b4 - b4 * b4 * b4 * 0.166667f;    //clipping
+	b4 = b4 - b4 * b4 * b4 * 0.166667;    //clipping
 	b0 = in;
   
 	AOUT0 = b4;
 	AOUT1 = in - b4;
-	AOUT2 = 3.0f * (b3 - b4);
+	AOUT2 = 3.0 * (b3 - b4);
 	
 	return;
 }
@@ -592,8 +594,8 @@ void module_Oscilator1(int id) {
 	volatile int i;
 	
 	if (note[0]!=lastnote) {
-		basictone	= note[0]%12; // attach this oscillator to the decoded voice 0;
-		octave		= note[0]/12;
+		basictone	= NOTE%12; // attach this oscillator to the decoded voice
+		octave		= NOTE/12;
 	
 		// lookuptable, basictone to frequency (HZ)
 		switch(basictone) {
@@ -635,10 +637,10 @@ void module_Oscilator1(int id) {
 	
 	// generate a PULSEWAVE, using the SAWUP
 	pw=(CIN0/256.0*1.8)-0.9;
-	if (AOUT0>pw)
-		AOUT1=1.0;
+	if (AOUT0 > pw)
+		AOUT1 = 1.0;
 	else
-		AOUT1=-1.0;
+		AOUT1 = -1.0;
 /*		
 	if (gate[0]==0) {
 		AOUT0=0;
@@ -682,8 +684,8 @@ void module_Oscilator2(int id) {
 	volatile int i;
 	
 	if (note[1]!=lastnote) {
-		basictone	= note[1]%12; // attach this oscillator to the decoded voice 0;
-		octave		= note[1]/12;
+		basictone	= NOTE%12; // attach this oscillator to the decoded voice
+		octave		= NOTE/12;
 	
 		// lookuptable, basictone to frequency (HZ)
 		switch(basictone) {
@@ -729,12 +731,7 @@ void module_Oscilator2(int id) {
 		AOUT1=1.0;
 	else
 		AOUT1=-1.0;
-/*		
-	if (gate[0]==0) {
-		AOUT0=0;
-		AOUT1=1;
-	}
-*/
+
 	return;
 }
 void regModule_Oscilator2(int id) {
@@ -760,11 +757,48 @@ void regModule_Oscilator2(int id) {
 
 void presetPatches(unsigned char prg) {
 	if (prg==0) {
-		//oscillator1 to audioout
-		patchAudioOut[2][0] = 0;
-		patchAudioOut[2][1] = 1;
-		patchCtrlIn[2][0] = 200;
+		patchAudioOut[0][0] = 2;
+		patchAudioOut[0][1] = 0;
+		patchCtrlIn[0][0]   = 134;
+		patchCtrlIn[0][1]   = 130;
+		patchNote[0]        = 0;
 
+		patchAudioOut[4][0] = 1;
+		patchAudioOut[4][1] = 3;
+		patchCtrlIn[4][0]   = 130;
+		patchCtrlIn[4][1]   = 130;
+		patchNote[4]        = 1;
+
+		/*
+		patchAudioIn[3][0]  = 2;
+		patchAudioOut[3][0] = 0;
+		patchAudioOut[3][1] = 10;
+		patchAudioOut[3][2] = 11;
+		patchCtrlIn[3][0]   = 130;
+		patchCtrlIn[3][1]   = 131;
+*/
+		patchCtrlIn[2][0]   = 140;
+		patchCtrlIn[2][1]   = 141;
+		patchCtrlOut[2][0]  = 130;
+
+		patchCtrlIn[3][0]   = 150;
+		patchCtrlIn[3][1]   = 151;
+		patchCtrlIn[3][2]   = 152;
+		patchCtrlIn[3][3]   = 153;
+		patchCtrlOut[3][0]  = 154;
+		patchGate[3]        = 0;
+		
+		
+		ctrlPatchBus[140]   = 50;
+		ctrlPatchBus[141]   = 200;
+		ctrlPatchBus[130]   = 100;
+		ctrlPatchBus[131]   = 180;
+		
+		ctrlPatchBus[150]   = 50;
+		ctrlPatchBus[151]   = 80;
+		ctrlPatchBus[152]   = 100;
+		ctrlPatchBus[153]   = 80;
+		
 	}
 	return;
 }
@@ -773,18 +807,25 @@ void presetPatches(unsigned char prg) {
 // Registration of the modules to the OpenModular
 // This function is called by the OpenModular
 void moduleRegistration(void) {
+	regModule_Oscilator1(0);
+	regModule_Sequencer(1);
+	regModule_LFO(2);
+	regModule_ADSR(3);
+	regModule_Oscilator2(4);
+//	regModule_Gain(4);
+//	regModule_Filter1(3);
+	
+	
+//	regModule_Gain(0);
+//	regModule_ADSR(1);
+//	regModule_Oscilator2(3);
+//	regModule_Filter1(4);
+//	regModule_Filter2(5);
+//	regModule_LFO(6);
+//	regModule_SampleAndHold(7);
+//	regModule_Sequencer(8);
 
-	regModule_Gain(0);
-	regModule_ADSR(1);
-	regModule_Oscilator1(2);
-	regModule_Oscilator2(3);
-	regModule_Filter1(4);
-	regModule_Filter2(5);
-	regModule_LFO(6);
-	regModule_SampleAndHold(7);
-	regModule_Sequencer(8);
-
-	numberOfModules=9;
+	numberOfModules=5;
 
 	return;
 }

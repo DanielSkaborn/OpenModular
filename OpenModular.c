@@ -16,8 +16,8 @@
 void mainOpenModular(void);
 
 #include "OpenModularVarsM.h"
-#include "hal_text.c"
-//#include "hal_RPi.c"
+//#include "hal_text.c"
+#include "hal_RPi.c"
 #include "modules.c"
 
 void sendModulesInfo(void) {
@@ -256,8 +256,8 @@ void clearBusses(void) {
 	for (i=0 ; i<128 ; i++)
 		audioPatchBus[i]=0;
 		
-	note[0] = 24;
-	note[1] = 24;
+	note[0] = 1;
+	note[1] = 1;
 	note[2] = 1;
 	gate[0] = 0;
 	gate[1] = 0;
@@ -292,22 +292,22 @@ void mainOpenModular(void) {
 	moduleRegistration();
 	clearPatches();
 	clearBusses();
-
+		
 	presetPatches(0);
 	
-	while(1) ;
-	
-	
 	while(1) { // forever loop
-		if(MIDIdataavail()) {
-			parse();
-		}
+//		if(MIDIdataavail()) {
+//			parse();
+//		}
 		if(AudioFIFOfull()==0) {
+//			loadLED(1);
 			// Execute one sampletick from all modules
 			for (i=0;i<numberOfModules;i++) { 
 				moduleRegistry[i](i);
 			}
 			AudioOut();
+		} else {
+//			loadLED(0);
 		}
 	}
 	return; // never reached
