@@ -16,14 +16,40 @@
 void mainOpenModular(void);
 
 #include "OpenModularVarsM.h"
-//#include "hal_text.c"
-#include "hal_RPi.c"
+#include "hal_text.c"
+//#include "hal_RPi.c"
 #include "modules.c"
 
 void sendModulesInfo(void) {
-	//To be implemented
+	int id,i;
+	
+	MIDIout( 0xF0 );				// SysEx
+	MIDIout( OPMODMFG1 );
+	MIDIout( OPMODMFG2 );
+	MIDIout( OPMODMFG3 );
+	MIDIout( 0x07 );				// Modules information
+	MIDIout( numberOfModules );	// Number of modules
+	for (id=0 ; id<numberOfModules ; id++) {
+		MIDIout( id );
+		for (i=0 ; i<8 ; i++)
+			MIDIout( modName[id][i] );
+		MIDIout( modAudIns[id] );
+		MIDIout( modAudOuts[id] );
+		MIDIout( modCtrlIns[id] );
+		MIDIout( modCtrlOuts[id] );
+		for (i=0;i<4*modAudIns[id];i++)
+			MIDIout( modAudInsName[id][i] );
+		for (i=0;i<4*modAudOuts[id];i++)
+			MIDIout( modAudOutsName[id][i] );
+		for (i=0;i<4*modCtrlIns[id];i++)
+			MIDIout( modCtrlInsName[id][i] );
+		for (i=0;i<4*modCtrlOuts[id];i++)
+			MIDIout( modCtrlOutsName[id][i] );
+	}
+	MIDIout(0xF7);
+	MIDIout(0xFF);
 	return;
-}
+	}
 
 void sendPatchDump(void) {
 	//To be implemented
@@ -241,7 +267,11 @@ void mainOpenModular(void) {
 	clearBusses();
 
 	presetPatches(0);
-
+	sendModulesInfo();
+	
+	while(1) ;
+	
+	
 	while(1) { // forever loop
 		if(MIDIdataavail()) {
 			parse();

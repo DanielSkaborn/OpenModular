@@ -16,6 +16,10 @@ unsigned char MIDIrcv(void) {
 	return 0;
 }
 void MIDIout(unsigned char outbuf) {
+	unsigned char temp;
+	temp = outbuf;
+	if (temp&0x80) printf("\n");
+	printf("%02X ",outbuf);
 	return;
 }
 
