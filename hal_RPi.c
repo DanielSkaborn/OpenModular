@@ -1,5 +1,5 @@
 // OpenModular
-// HAL.c 
+// HAL_RPi.c 
 // HardwareAbstractionLayer
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2

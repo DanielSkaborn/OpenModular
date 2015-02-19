@@ -1,10 +1,10 @@
 // OpenModular
-// OpenModularVars.h
+// OpenModularVarsM.h
 //
 // The OpenModular data for each module
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
-
+// Daniel Skaborn
 
 #define MAXMODS		16
 #define MAXCTRLIN	16

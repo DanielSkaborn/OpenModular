@@ -1,11 +1,10 @@
 // OpenModular
-// moduleExample.c
+// modules.c
 //
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
-//#include "OpenModularVars.h"
 
 
 

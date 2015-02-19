@@ -4,6 +4,8 @@
 // HardwareAbstractionLayer
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
+// Daniel Skaborn
+
 
 // receive MIDIchannel-1 (0 to 15)
 #define CHANNEL 1
