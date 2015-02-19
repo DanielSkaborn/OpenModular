@@ -3,9 +3,10 @@
 //
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
-
+// Daniel Skaborn
 
 //#include "OpenModularVars.h"
+
 
 
 #define e		2.718281828459045
@@ -82,7 +83,8 @@
 #define GATE	patchGate[id]
 #define NOTE	patchNote[id]
 
-void moduleGain(int id) { // an amplifier and peak follower
+// an amplifier and peak follower
+void module_Gain(int id) { 
 	volatile static char peak;
 	volatile char newpeak;
 	
@@ -94,8 +96,11 @@ void moduleGain(int id) { // an amplifier and peak follower
 		
 	return;
 }
+void regModule_Gain(int id) {
+	moduleRegistry[id] = module_Gain;
+}
 
-void moduleADSR(int id) {
+void module_ADSR(int id) {
 	// CIN0  : Atack
 	// CIN1  : Decay
 	// CIN2  : Sustain
@@ -162,23 +167,27 @@ void moduleADSR(int id) {
 	//printf("%f %f ",signal, sustain);
 	return;
 }
-
+void regModule_ADSR(int id) {
+	moduleRegistry[id] = module_ADSR;
+}
+/*
 void moduleGainInit(int id) {
 	
 	// What does this module support
-/*	modCtrlIns[id]			= 1;
+	modCtrlIns[id]			= 1;
 	modCtrlInsName[id][]	= {"GAIN\0"};
 	modCtrlOuts[id] 		= 1;
 	modCtrlOutsName[id][]	= {"PEAK\0"};
 	modAudIns[id]			= 1;
 	modAudInsName[id][]		= {"IN  \0"};
 	modAudOuts[id]			= 1;
-	modAudOutsName[id][]	= {"OUT \0"};*/
+	modAudOutsName[id][]	= {"OUT \0"};
 	// put a function pointer to the process function in the OpenModular registry
 //	modProcessPtr[id]		= (void (*)(int)) ModuleExampleProcess;
 }
+*/
 
-void moduleLFO(int id) {
+void module_LFO(int id) {
 	// CIN0	 : 1/rate
 	// CIN1  : max
 
@@ -196,8 +205,11 @@ void moduleLFO(int id) {
 	}
 	return;
 }
+void regModule_LFO(int id) {
+	moduleRegistry[id] = module_LFO;
+}
 
-void moduleSampleAndHold(int id) {
+void module_SampleAndHold(int id) {
 	//AIN0   : Source to sample
 	//COUT0  : SampleAndHold output
 	
@@ -219,6 +231,10 @@ void moduleSampleAndHold(int id) {
 //	printf("%d %d ",target, COUT0);
 	return;
 }
+void regModule_SampleAndHold(int id) {
+	moduleRegistry[id] = module_SampleAndHold;
+}
+
 /*
 void moduleMoogFilter(int id) {
 	// AIN0  : INPUT
@@ -272,7 +288,7 @@ void moduleMoogFilter(int id) {
 }
 */
 
-void moduleSequencer(int id) {
+void module_Sequencer(int id) {
 	volatile static int step;
 	volatile static int counter;
 	
@@ -321,8 +337,66 @@ void moduleSequencer(int id) {
 	}
 	return;
 }
+void regModule_Sequencer(int id) {
+	moduleRegistry[id] = module_Sequencer;
+}
 
-void moduleFilter1(int id) {
+void module_Filter1(int id) {
+	// Moog 24 dB/oct resonant lowpass VCF
+	// References: CSound source code, Stilson/Smith CCRMA paper.
+	// Modified by paul.kellett@maxim.abel.co.uk July 2000
+	// Modified to OpenModular by Daniel Skaborn Feb 2015
+
+	// AIN0  : INPUT
+	// AOUT0 : LOWPASS OUTPUT
+	// AOUT1 : HIGHPASS OUTPUT
+	// AOUT2 : BANDPASS OUTPUT
+	// CIN0	 : CUTOFF FREQUENCY
+	// CIN1  : RESONANCE
+
+	volatile static unsigned char lastcin0, lastcin1;
+	
+	volatile static float frequency, resonance;
+	volatile static float freqinhz;
+	volatile static float f, p, q;             //filter coefficients
+	volatile static float in, b0, b1, b2, b3, b4;  //filter buffers (beware denormals!)
+	volatile static float t1, t2;              //temporary buffers
+	
+
+	// Set coefficients given frequency & resonance [0.0...1.0]
+	if ((CIN0 != lastcin0) || (CIN1 != lastcin1)) {
+		lastcin0=CIN0; lastcin1=CIN1;
+		freqinhz = CIN0 * 3.90625;	// 0 to 1000Hz
+		frequency = freqinhz * (1.f/( SAMPLERATEF/2.0f));
+		resonance = CIN1 / 256.0;	// 0 to 1
+				
+		q = 1.0f - frequency;
+		p = frequency + 0.8f * frequency * q;
+		f = p + p - 1.0f;
+		q = resonance * (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
+	}
+
+	in = AIN0;
+	in -= q * b4;                          //feedback
+	t1 = b1;  b1 = (in + b0) * p - b1 * f;
+	t2 = b2;  b2 = (b1 + t1) * p - b2 * f;
+	t1 = b3;  b3 = (b2 + t2) * p - b3 * f;
+	b4 = (b3 + t1) * p - b4 * f;
+	b4 = b4 - b4 * b4 * b4 * 0.166667f;    //clipping
+	b0 = in;
+  
+	AOUT0 = b4;
+	AOUT1 = in - b4;
+	AOUT2 = 3.0f * (b3 - b4);
+	
+	return;
+}
+void regModule_Filter1(int id) {
+	moduleRegistry[id] = module_Filter1;
+}
+
+
+void module_Filter2(int id) {
 	// Moog 24 dB/oct resonant lowpass VCF
 	// References: CSound source code, Stilson/Smith CCRMA paper.
 	// Modified by paul.kellett@maxim.abel.co.uk July 2000
@@ -373,60 +447,11 @@ void moduleFilter1(int id) {
 	
 	return;
 }
-
-void moduleFilter2(int id) {
-	// Moog 24 dB/oct resonant lowpass VCF
-	// References: CSound source code, Stilson/Smith CCRMA paper.
-	// Modified by paul.kellett@maxim.abel.co.uk July 2000
-	// Modified to OpenModular by Daniel Skaborn Feb 2015
-
-	// AIN0  : INPUT
-	// AOUT0 : LOWPASS OUTPUT
-	// AOUT1 : HIGHPASS OUTPUT
-	// AOUT2 : BANDPASS OUTPUT
-	// CIN0	 : CUTOFF FREQUENCY
-	// CIN1  : RESONANCE
-
-	volatile static unsigned char lastcin0, lastcin1;
-	
-	volatile static float frequency, resonance;
-	volatile static float freqinhz;
-	volatile static float f, p, q;             //filter coefficients
-	volatile static float in, b0, b1, b2, b3, b4;  //filter buffers (beware denormals!)
-	volatile static float t1, t2;              //temporary buffers
-	
-
-	// Set coefficients given frequency & resonance [0.0...1.0]
-	if ((CIN0 != lastcin0) || (CIN1 != lastcin1)) {
-		lastcin0=CIN0; lastcin1=CIN1;
-		freqinhz = CIN0 * 3.90625;	// 0 to 1000Hz
-		frequency = freqinhz * (1.f/( SAMPLERATEF/2.0f));
-		resonance = CIN1 / 256.0;	// 0 to 1
-				
-		q = 1.0f - frequency;
-		p = frequency + 0.8f * frequency * q;
-		f = p + p - 1.0f;
-		q = resonance * (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
-	}
-
-	// Filter (in [-1.0...+1.0])
-	in = AIN0;
-	in -= q * b4;                          //feedback
-	t1 = b1;  b1 = (in + b0) * p - b1 * f;
-	t2 = b2;  b2 = (b1 + t1) * p - b2 * f;
-	t1 = b3;  b3 = (b2 + t2) * p - b3 * f;
-	b4 = (b3 + t1) * p - b4 * f;
-	b4 = b4 - b4 * b4 * b4 * 0.166667f;    //clipping
-	b0 = in;
-  
-	AOUT0 = b4;
-	AOUT1 = in - b4;
-	AOUT2 = 3.0f * (b3 - b4);
-	
-	return;
+void regModule_Filter2(int id) {
+	moduleRegistry[id] = module_Filter2;
 }
 
-void moduleOscilator1(int id) {
+void module_Oscilator1(int id) {
 	// AOUT0 : SAWUP
 	// AOUT1 : SQUARE PWM
 	// CIN0	 : PULSEWIDTH
@@ -495,9 +520,12 @@ void moduleOscilator1(int id) {
 */
 	return;
 }
+void regModule_Oscilator1(int id) {
+	moduleRegistry[id] = module_Oscilator1;
+}
 
 
-void moduleOscilator2(int id) {
+void module_Oscilator2(int id) {
 	// AOUT0 : SAWUP
 	// AOUT1 : SQUARE PWM
 	// CIN0	 : PULSEWIDTH
@@ -566,22 +594,30 @@ void moduleOscilator2(int id) {
 */
 	return;
 }
+void regModule_Oscilator2(int id) {
+	moduleRegistry[id] = module_Oscilator2;
+}
 
-/*
-void moduleTestTone(int id) {
-	volatile static int counter;
-	
-	counter++;
-	if (counter==220) {
-		AOUT0=1.0;
-		AOUT1=-0.250;
+void presetPatches(unsigned char prg) {
+	if (prg==0) {
+		//oscillator1 to audioout
+		patchAudioOut[2][0] = 0;
+		patchAudioOut[2][1] = 1;
 	}
-	if (counter>439) {
-		AOUT0=-1.0;
-		AOUT1=0.250;
-		counter=0;
-	}
-	
 	return;
 }
-*/
+// Registration of the modules to the OpenModular
+// This function is called by the OpenModular
+void moduleRegistration(void) {
+	regModule_Gain(0);
+	regModule_ADSR(1);
+	regModule_Oscilator1(2);
+	regModule_Oscilator2(3);
+	regModule_Filter1(4);
+	regModule_Filter2(5);
+	regModule_LFO(6);
+	regModule_SampleAndHold(7);
+	regModule_Sequencer(8);
+
+	numberOfModules=9;
+}

@@ -14,15 +14,9 @@
 void mainOpenModular(void);
 
 #include "OpenModularVarsM.h"
-//#include "hal_text.c"
-#include "hal_RPi.c"
+#include "hal_text.c"
+//#include "hal_RPi.c"
 #include "modules.c"
-
-#define NUMBEROFMODS	3
-int modularInit(void) {
-	//moduleExampleInit(0);
-	return 1;
-}
 
 void sendModulesInfo(void) {
 	//To be implemented
@@ -198,104 +192,64 @@ void parse(){
 	return;
 }
 
+void clearBusses(void) {
+	int i;
+	
+	for (i=0 ; i<256 ; i++)
+		ctrlPatchBus[i]=0;
+		
+	for (i=0 ; i<128 ; i++)
+		audioPatchBus[i]=0;
+		
+	note[0] = 24;
+	note[1] = 24;
+	note[2] = 1;
+	gate[0] = 0;
+	gate[1] = 0;
+	gate[3] = 0;
+	pitchBend = 0.0;
+	pitchBendRaw = 0;
+	return;
+}
+
+void clearPatches(void) {
+	int i,ii;
+		
+	for (i=0 ; i<MAXMODS ; i++) {
+		for (ii=0 ; ii<MAXCTRLIN ; ii++)
+			patchCtrlIn[i][ii] = NOCTRLPATCHBUS-1;
+		for (ii=0 ; ii<MAXCTRLOUT ; ii++)
+			patchCtrlOut[i][ii] = NOCTRLPATCHBUS-2;
+		for (ii=0 ; ii<MAXAUDIIN ; ii++)
+			patchAudioIn[i][ii] = NOAUDIOPATCHBUS-1;
+		for (ii=0 ; ii<MAXAUDIOUT ; ii++)
+			patchAudioOut[i][ii] = NOAUDIOPATCHBUS-2;
+			
+		patchGate[i] = 2;
+		patchNote[i] = 2;
+	}
+	return;
+}
+
+
 void mainOpenModular(void) {	
 	int i;
 	
-	modularInit();
-
-	note[0]=24;
+	moduleRegistration();
+	clearPatches();
+	clearBusses();
 	
-	//clear busses
-	for (i=0;i<256;i++)
-		ctrlPatchBus[i]=0;
-	for (i=0;i<128;i++)
-		audioPatchBus[i]=0;
-		
-	//set up a patch
-
-	//moduleOscilator1 to 2 and 3
-	patchAudioOut[1][0] = 2; // saw
-	patchAudioOut[1][1] = 3; // PW
-	patchCtrlIn[1][0]   = 132; // pw
-	patchCtrlIn[1][1]   = 133; // tune
-	patchGate[1]		= 1;
-	patchNote[1] 		= 1;
+	presetPatches(0);
 	
-	//moduleOscilator2
-	patchAudioOut[7][0] = 4; // saw
-	patchAudioOut[7][1] = 5; // PW
-	patchCtrlIn[7][0]   = 129; // pw
-	patchCtrlIn[7][1]   = 128; // tune
-	patchGate[7]		= 1;
-	patchNote[7] 		= 1;
-	//filter1
-	patchAudioIn[2][0]  = 3;
-	patchAudioOut[2][0] = 0;
-	patchAudioOut[2][1] = 4;
-	patchAudioOut[2][2] = 5;
-	
-	patchCtrlIn[2][0]   = 144; // cutoff frequency
-	patchCtrlIn[2][1]   = 128; // resonance
-
-
-	//filter2
-	patchAudioIn[5][0]  = 5;
-	patchAudioOut[5][0] = 1;
-	patchAudioOut[5][1] = 6;
-	patchAudioOut[5][2] = 7;
-
-	patchCtrlIn[5][0]   = 144; // cutoff frequency
-	patchCtrlIn[5][1]   = 129; // resonance
-	
-	//lfo module
-	patchCtrlOut[3][0]  = 128;
-	patchCtrlIn[3][0]   = 130; // 1/rate
-	patchCtrlIn[3][1]   = 131; // max
-
-	// S&H module
-	patchAudioIn[4][0]  = 2;   // from sawwave
-	patchCtrlOut[4][0]  = 129; // to filter resonance
-	
-	// ADSR
-	patchCtrlIn[6][0]	= 140;  // Attack
-	patchCtrlIn[6][1]	= 141;  // Decay
-	patchCtrlIn[6][2]	= 142;  // Sustain
-	patchCtrlIn[6][3]	= 143;  // Release
-	patchCtrlOut[6][0]  = 144;  // ADSR
-	patchGate[6]		= 0;
-	
-	//Hardset a value to one controllerBus 129
-	ctrlPatchBus[128] = 100;
-	ctrlPatchBus[129] = 220;
-	ctrlPatchBus[130] = 10;
-	ctrlPatchBus[131] = 255;
-	ctrlPatchBus[132] = 50;
-	ctrlPatchBus[133] = 127;
-	ctrlPatchBus[140] = 10;
-	ctrlPatchBus[141] = 50;
-	ctrlPatchBus[142] = 100;
-	ctrlPatchBus[143] = 20;
-
-	
-
 	while(1) { // forever loop
-		if(MIDIdataavail()) parse();
+		if(MIDIdataavail()) {
+			parse();
+		}
 		if(AudioFIFOfull()==0) {
-
-			// List the module process functions here...
-
-			moduleSequencer(0);
-			moduleOscilator1(1);
-			moduleFilter1(2);
-			moduleLFO(3);
-			moduleSampleAndHold(4);
-			moduleFilter2(5);
-			moduleADSR(6);
-			moduleOscilator2(7);
-
-//			for (i=0;i<NUMBEROFMODS;i++) { // Do the modules
-//				((void (*)(void))(modProcessPtr[i])))();
-//			}
+			// Execute one sampletick from all modules
+			for (i=0;i<numberOfModules;i++) { 
+				moduleRegistry[i](i);
+			}
 			AudioOut();
 		}
 	}

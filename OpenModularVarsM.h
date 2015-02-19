@@ -12,15 +12,16 @@
 #define MAXAUDIIN	4
 #define MAXAUDIOUT	4
 
-//((void (*)(int))) modProcessPtr[MAXMODS];
+#define NOCTRLPATCHBUS 256
+#define NOAUDIOPATCHBUS 128
 
 // These are the 'live' bus signals
-volatile unsigned char	ctrlPatchBus[256];
-volatile float 			audioPatchBus[128];
+volatile unsigned char	ctrlPatchBus[NOCTRLPATCHBUS];
+volatile float 			audioPatchBus[NOAUDIOPATCHBUS];
 volatile float			pitchBend;
 volatile int			pitchBendRaw;
-volatile unsigned char	gate[2];
-volatile unsigned char	note[2];
+volatile unsigned char	gate[3];
+volatile unsigned char	note[3];
 
 // These defines the patch of the modular
 volatile int	patchCtrlIn[MAXMODS][MAXCTRLIN];
@@ -39,3 +40,8 @@ volatile unsigned char modCtrlInsName[MAXMODS][4*MAXCTRLIN+1];
 volatile unsigned char modCtrlOutsName[MAXMODS][4*MAXCTRLIN+1];
 volatile unsigned char modAudInsName[MAXMODS][4*MAXCTRLIN+1];
 volatile unsigned char modAudOutsName[MAXMODS][4*MAXCTRLIN+1];
+
+typedef void (*modulefunc_t)(int id);
+
+volatile modulefunc_t 	moduleRegistry[MAXMODS];
+volatile int 	numberOfModules;
