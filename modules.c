@@ -83,6 +83,23 @@
 #define GATE	patchGate[id]
 #define NOTE	patchNote[id]
 
+void copymodstrings(int id, char* name, char* CtrlInNames, char* CtrlOutNames, char* AudInNames, char* AudOutNames){
+	int i;
+	
+	for (i=0;i<4*MAXCTRLIN+1;i++)
+		modCtrlInsName[id][i] = CtrlInNames[i];
+	for (i=0;i<4*MAXCTRLOUT+1;i++)
+		modCtrlOutsName[id][i] = CtrlOutNames[i];
+	for (i=0;i<4*MAXAUDIIN+1;i++)
+		modAudInsName[id][i] = AudInNames[i];
+	for (i=0;i<4*MAXAUDIOUT+1;i++)
+		modAudOutsName[id][i] = AudOutNames[i];
+	for (i=0;i<9;i++)
+		modName[id][i] = name[i];
+
+	return;
+}
+
 // an amplifier and peak follower
 void module_Gain(int id) { 
 	volatile static char peak;
@@ -98,6 +115,22 @@ void module_Gain(int id) {
 }
 void regModule_Gain(int id) {
 	moduleRegistry[id] = module_Gain;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "GAIN                                                            \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "PEAK                                                            \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "IN              \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "OUT             \0";
+//               "        \0";
+	char name[9]="GAIN    \0";
+	
+	modCtrlIns[id]     = 1;
+	modCtrlOuts[id]    = 1;
+	modAudIns[id]      = 1;
+	modAudOuts[id]     = 1;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 void module_ADSR(int id) {
@@ -164,11 +197,26 @@ void module_ADSR(int id) {
 	} //switch
 	lastgate = GATE;
 	COUT0=(unsigned char)(signal);
-	//printf("%f %f ",signal, sustain);
 	return;
 }
 void regModule_ADSR(int id) {
 	moduleRegistry[id] = module_ADSR;
+
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "ATT DEC SUS REL                                                 \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "ADSR                                                            \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
+//               "        \0";
+	char name[9]="ADSR    \0";
+	
+	modCtrlIns[id]     = 4;
+	modCtrlOuts[id]    = 1;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 0;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 /*
 void moduleGainInit(int id) {
@@ -207,6 +255,22 @@ void module_LFO(int id) {
 }
 void regModule_LFO(int id) {
 	moduleRegistry[id] = module_LFO;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "RATEMAX                                                         \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "TRI                                                             \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
+//               "        \0";
+	char name[9]="LFO     \0";
+	
+	modCtrlIns[id]     = 2;
+	modCtrlOuts[id]    = 1;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 0;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 void module_SampleAndHold(int id) {
@@ -233,6 +297,22 @@ void module_SampleAndHold(int id) {
 }
 void regModule_SampleAndHold(int id) {
 	moduleRegistry[id] = module_SampleAndHold;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "                                                                \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "S&H                                                             \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "IN              \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
+//               "        \0";
+	char name[9]="S&H     \0";
+	
+	modCtrlIns[id]     = 0;
+	modCtrlOuts[id]    = 1;
+	modAudIns[id]      = 1;
+	modAudOuts[id]     = 0;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 /*
@@ -339,6 +419,22 @@ void module_Sequencer(int id) {
 }
 void regModule_Sequencer(int id) {
 	moduleRegistry[id] = module_Sequencer;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "                                                                \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "                                                                \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
+//               "        \0";
+	char name[9]="SEQ     \0";
+	
+	modCtrlIns[id]     = 0;
+	modCtrlOuts[id]    = 0;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 0;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 void module_Filter1(int id) {
@@ -393,6 +489,22 @@ void module_Filter1(int id) {
 }
 void regModule_Filter1(int id) {
 	moduleRegistry[id] = module_Filter1;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "CF  RES                                                         \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "                                                                \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "IN              \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "LP  HP  BP      \0";
+//               "        \0";
+	char name[9]="FILTER1 \0";
+	
+	modCtrlIns[id]     = 2;
+	modCtrlOuts[id]    = 0;
+	modAudIns[id]      = 1;
+	modAudOuts[id]     = 3;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 
@@ -449,6 +561,22 @@ void module_Filter2(int id) {
 }
 void regModule_Filter2(int id) {
 	moduleRegistry[id] = module_Filter2;
+
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "CF  RES                                                         \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "                                                                \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "IN              \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "LP  HP  BP      \0";
+//               "        \0";
+	char name[9]="FILTER2 \0";
+	
+	modCtrlIns[id]     = 2;
+	modCtrlOuts[id]    = 0;
+	modAudIns[id]      = 1;
+	modAudOuts[id]     = 3;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
 }
 
 void module_Oscilator1(int id) {
@@ -521,9 +649,25 @@ void module_Oscilator1(int id) {
 	return;
 }
 void regModule_Oscilator1(int id) {
-	moduleRegistry[id] = module_Oscilator1;
-}
 
+	moduleRegistry[id] = module_Oscilator1;
+	
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "PW  TUNE                                                        \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "                                                                \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "SAW SQR         \0";
+	char name[9]="OSC1    \0";
+
+	
+	modCtrlIns[id]     = 2;
+	modCtrlOuts[id]    = 0;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 2;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
+}
 
 void module_Oscilator2(int id) {
 	// AOUT0 : SAWUP
@@ -596,6 +740,23 @@ void module_Oscilator2(int id) {
 }
 void regModule_Oscilator2(int id) {
 	moduleRegistry[id] = module_Oscilator2;
+
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "PW  TUNE                                                        \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "                                                                \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "SAW SQR         \0";
+	char name[9]="OSC2    \0";
+
+	
+	modCtrlIns[id]     = 2;
+	modCtrlOuts[id]    = 0;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 2;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
+
 }
 
 void presetPatches(unsigned char prg) {
@@ -603,12 +764,16 @@ void presetPatches(unsigned char prg) {
 		//oscillator1 to audioout
 		patchAudioOut[2][0] = 0;
 		patchAudioOut[2][1] = 1;
+
 	}
 	return;
 }
+
+
 // Registration of the modules to the OpenModular
 // This function is called by the OpenModular
 void moduleRegistration(void) {
+
 	regModule_Gain(0);
 	regModule_ADSR(1);
 	regModule_Oscilator1(2);
@@ -620,4 +785,6 @@ void moduleRegistration(void) {
 	regModule_Sequencer(8);
 
 	numberOfModules=9;
+
+	return;
 }

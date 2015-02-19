@@ -14,8 +14,8 @@
 void mainOpenModular(void);
 
 #include "OpenModularVarsM.h"
-#include "hal_text.c"
-//#include "hal_RPi.c"
+//#include "hal_text.c"
+#include "hal_RPi.c"
 #include "modules.c"
 
 void sendModulesInfo(void) {
@@ -230,17 +230,16 @@ void clearPatches(void) {
 	}
 	return;
 }
-
-
+	
 void mainOpenModular(void) {	
 	int i;
 	
 	moduleRegistration();
 	clearPatches();
 	clearBusses();
-	
+
 	presetPatches(0);
-	
+
 	while(1) { // forever loop
 		if(MIDIdataavail()) {
 			parse();

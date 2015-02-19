@@ -32,16 +32,16 @@ volatile int	patchGate[MAXMODS];
 volatile int	patchNote[MAXMODS];
 
 // Modules information fields
-volatile unsigned char modCtrlIns[MAXMODS];
-volatile unsigned char modCtrlOuts[MAXMODS];
-volatile unsigned char modAudIns[MAXMODS];
-volatile unsigned char modAudOuts[MAXMODS];	
-volatile unsigned char modCtrlInsName[MAXMODS][4*MAXCTRLIN+1];
-volatile unsigned char modCtrlOutsName[MAXMODS][4*MAXCTRLIN+1];
-volatile unsigned char modAudInsName[MAXMODS][4*MAXCTRLIN+1];
-volatile unsigned char modAudOutsName[MAXMODS][4*MAXCTRLIN+1];
-
 typedef void (*modulefunc_t)(int id);
+volatile modulefunc_t	moduleRegistry[MAXMODS];
+volatile char 	modName[MAXMODS][9];
+volatile unsigned char	modCtrlIns[MAXMODS];
+volatile unsigned char	modCtrlOuts[MAXMODS];
+volatile unsigned char	modAudIns[MAXMODS];
+volatile unsigned char	modAudOuts[MAXMODS];	
+volatile unsigned char	modCtrlInsName[MAXMODS][4*MAXCTRLIN+1];
+volatile unsigned char	modCtrlOutsName[MAXMODS][4*MAXCTRLIN+1];
+volatile unsigned char	modAudInsName[MAXMODS][4*MAXAUDIIN+1];
+volatile unsigned char	modAudOutsName[MAXMODS][4*MAXAUDIOUT+1];
 
-volatile modulefunc_t 	moduleRegistry[MAXMODS];
 volatile int 	numberOfModules;
