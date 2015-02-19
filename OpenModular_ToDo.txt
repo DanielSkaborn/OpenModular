@@ -1,7 +1,7 @@
 Todo status: 20150218
 RPi UART setup for MIDI not working properly, needs to be fixed
 MIDI parser not tested
-MIDI outputs (SYX)
+
 change MIDI SYX parsing to allow nestling in standard MIDI messages
 Write documentation
 
