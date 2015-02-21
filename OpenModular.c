@@ -35,18 +35,12 @@ void sendModulesInfo(void) {
 		MIDIout( id );
 		for (i=0 ; i<8 ; i++)
 			MIDIout( modName[id][i] );
-		MIDIout( modAudIns[id] );
-		MIDIout( modAudOuts[id] );
-		MIDIout( modCtrlIns[id] );
-		MIDIout( modCtrlOuts[id] );
-		for (i=0;i<4*modAudIns[id];i++)
-			MIDIout( modAudInsName[id][i] );
-		for (i=0;i<4*modAudOuts[id];i++)
-			MIDIout( modAudOutsName[id][i] );
-		for (i=0;i<4*modCtrlIns[id];i++)
-			MIDIout( modCtrlInsName[id][i] );
-		for (i=0;i<4*modCtrlOuts[id];i++)
-			MIDIout( modCtrlOutsName[id][i] );
+		MIDIout( modIns[id] );
+		MIDIout( modOuts[id] );
+		for (i=0;i<4*modIns[id];i++)
+			MIDIout( modInsName[id][i] );
+		for (i=0;i<4*modOuts[id];i++)
+			MIDIout( modOutsName[id][i] );
 	}
 	MIDIout(0xF7);
 	return;
@@ -66,17 +60,13 @@ void sendPatchDump(void) {
 		MIDIout( id );
 		MIDIout( patchGate[id] );
 		MIDIout( patchNote[id] );
-		for (i=0;i<MAXAUDIIN;i++)
-			MIDIout( patchAudioIn[id][i] );
-		for (i=0;i<MAXAUDIOUT;i++)
-			MIDIout( patchAudioOut[id][i] );
-		for (i=0;i<	MAXCTRLIN;i++) {
-			temp = patchCtrlIn[id][i];
+		for (i=0;i<	MAXIN;i++) {
+			temp = patchIn[id][i];
 			MIDIout( temp&0x7F);
 			MIDIout( (temp/0x80)&0x7F);
 		}
-		for (i=0;i<	MAXCTRLIN;i++) {
-			temp = patchCtrlOut[id][i];
+		for (i=0;i<	MAXOUT;i++) {
+			temp = patchOut[id][i];
 			MIDIout( temp&0x7F);
 			MIDIout( (temp/0x80)&0x7F);
 		}
@@ -111,7 +101,7 @@ void parse(){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-				ctrlPatchBus[(int)(tmp1)]=(unsigned char)(inbuf*2);
+				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
 			}
 			mps=0;
 			break;
@@ -184,55 +174,30 @@ void parse(){
 			if (inbuf == 0x06) mps=27; // Request Modules Information
 			
 			break;
-		case 14: // Set AudioPatchIn
+		case 14: // Set PatchIn
 			tmp1=inbuf; // moduleID
 			mps=15;
 			break;
-		case 15:
-			tmp2=inbuf; // moduleAudioInPort
+		case 15: // TODO CHANGE TO HIGHBYTE / LOWBYTE
+			tmp2=inbuf; // moduleInPort
 			mps=16;
 			break;
 		case 16:
-			patchAudioIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
+			patchIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
 			mps=0;
 			break;
-		case 17: // Set AudioPatchOut
+		case 17: // Set PatchOut
 			tmp1=inbuf; // moduleID
 			mps=18;
 			break;
 		case 18:
-			tmp2=inbuf; // moduleAudioInPort
+			tmp2=inbuf; // moduleInPort
 			mps=19;
 			break;
 		case 19:
-			patchAudioOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
+			patchOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf); // TODO CHANGE TO HIGH7BITS andLOW7BITS
 			mps=0;
 			break;
-		case 20: // Set CtrlPatchIn
-			tmp1=inbuf; // moduleID
-			mps=21;
-			break;
-		case 21:
-			tmp2=inbuf; // moduleAudioInPort
-			mps=22;
-			break;
-		case 22:
-			patchCtrlIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
-			mps=0;
-			break;
-		case 23: // Set CtrlPatchIn
-			tmp1=inbuf; // moduleID
-			mps=24;
-			break;
-		case 24:
-			tmp2=inbuf; // moduleAudioInPort
-			mps=25;
-			break;
-		case 25:
-			patchCtrlOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)inbuf;
-			mps=0;
-			break;
-		
 		case 26: // Request Of Patch Dump
 			if (inbuf==0xF7) sendPatchDump();
 			mps=0;
@@ -252,11 +217,9 @@ void parse(){
 void clearBusses(void) {
 	int i;
 	
-	for (i=0 ; i<256 ; i++)
-		ctrlPatchBus[i]=0;
-		
-	for (i=0 ; i<128 ; i++)
-		audioPatchBus[i]=0;
+	for (i=0 ; i<NOPATCHBUS ; i++) {
+		patchBus[i][0]=patchBus[i][1]=0;
+	}
 		
 	note[0] = 1;
 	note[1] = 1;
@@ -266,6 +229,9 @@ void clearBusses(void) {
 	gate[2] = 0;
 	pitchBend = 0.0;
 	pitchBendRaw = 0;
+	
+	togglerIn=0;
+	togglerOut=1;
 	return;
 }
 
@@ -273,15 +239,10 @@ void clearPatches(void) {
 	int i,ii;
 		
 	for (i=0 ; i<MAXMODS ; i++) {
-		for (ii=0 ; ii<MAXCTRLIN ; ii++)
-			patchCtrlIn[i][ii] = NOCTRLPATCHBUS-1;
-		for (ii=0 ; ii<MAXCTRLOUT ; ii++)
-			patchCtrlOut[i][ii] = NOCTRLPATCHBUS-2;
-		for (ii=0 ; ii<MAXAUDIIN ; ii++)
-			patchAudioIn[i][ii] = NOAUDIOPATCHBUS-1;
-		for (ii=0 ; ii<MAXAUDIOUT ; ii++)
-			patchAudioOut[i][ii] = NOAUDIOPATCHBUS-2;
-			
+		for (ii=0 ; ii<MAXIN ; ii++)
+			patchIn[i][ii] = NOPATCHBUS-1;
+		for (ii=0 ; ii<MAXOUT ; ii++)
+			patchOut[i][ii] = NOPATCHBUS-2;
 		patchGate[i] = 2;
 		patchNote[i] = 2;
 	}
@@ -294,22 +255,25 @@ void mainOpenModular(void) {
 	moduleRegistration();
 	clearPatches();
 	clearBusses();
-		
 	presetPatches(0);
+
 	
 	while(1) { // forever loop
-//		if(MIDIdataavail()) {
-//			parse();
-//		}
+		if(MIDIdataavail()) {
+			parse();
+		}
 		if(AudioFIFOfull()==0) {
-//			loadLED(1);
+
+			// Toggle bus
+			togglerIn=togglerOut;
+			if (togglerIn) togglerOut=0;
+			
 			// Execute one sampletick from all modules
 			for (i=0;i<numberOfModules;i++) { 
 				moduleRegistry[i](i);
 			}
 			AudioOut();
 		} else {
-//			loadLED(0);
 		}
 	}
 	return; // never reached
