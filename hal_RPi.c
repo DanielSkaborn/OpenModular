@@ -108,6 +108,8 @@ volatile unsigned int* pwmR;
 /** UART Register set */
 volatile unsigned int* uartR;
 
+
+
 int MIDIdataavail(void) { // pollcheck of MIDI input
     if((uartR[UART0_FR]&0x10)==0)
 		return 1;
@@ -146,11 +148,11 @@ void AudioOut(void) {
 	pwmR[PWM_FIF1] = out;
 
 	c++;
-	if (c==22050) {
+	if (c==220) {
 		// Set the GPIO16 output low ( Turn OK LED on )
         gpioR[GPIO_GPCLR0] = (1 << 16);
 	}
-	if (c>44100) {
+	if (c>440) {
 		c=0;
 		// Set the GPIO16 output high ( Turn OK LED off )
         gpioR[GPIO_GPSET0] = (1 << 16);
@@ -160,14 +162,16 @@ void AudioOut(void) {
 }
 
 int main(void) {
-	asm volatile("mov sp, #0x8000\n");                  /* Set stackpointer */
+//	asm volatile("ldr sp, =(128 * (1024 * 1024))\n");
+	asm volatile("mov sp, #0x8000\n");                 
 	asm volatile("mrc p15, 0, r0, c1, c0, 2\n");
-	asm volatile("orr r0, r0, #0x300000\n");            /* single precision */
-	asm volatile("orr r0, r0, #0xC00000\n");            /* double precision */
+	asm volatile("orr r0, r0, #0x300000\n");             // single precision 
+	asm volatile("orr r0, r0, #0xC00000\n");             // double precision 
 	asm volatile("mcr p15, 0, r0, c1, c0, 2\n");
-	asm volatile("mov r0, #0x40000000\n");              /* Enable FPU */
+	asm volatile("mov r0, #0x40000000\n");               // Enable FPU 
 	asm volatile("fmxr fpexc,r0\n");
 	
+
 	/* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
     gpioR	= (unsigned int*)GPIO_BASE;
     pwmR	= (unsigned int*)PWM_BASE;
@@ -198,6 +202,8 @@ int main(void) {
 	// Disable pull up/down for all GPIO pins & delay for 150 cycles.
 	// uartR[GPPUD] = 0x00000000;
 	// delay(150);
+	
+	
 	// Disable pull up/down for pin 14,15 & delay for 150 cycles.
    	gpioR[GPIO_GPPUDCLK0] = (1 << 14) | (1 << 15);
    	RPI_WaitMicroSeconds( 150 );
@@ -224,4 +230,5 @@ int main(void) {
     gpioR[GPIO_GPCLR0] = (1 << 16);
 
 	mainOpenModular();
+	return 0;
 }

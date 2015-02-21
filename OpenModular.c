@@ -84,8 +84,8 @@ void sendPatchDump(void) {
 }
 
 void parse(){
-	static int mps;
-	char tmp1, tmp2;
+	static int mps=0;
+	char tmp1=0, tmp2=0;
 	
 	unsigned char inbuf;
 	inbuf = MIDIrcv();
@@ -109,7 +109,7 @@ void parse(){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-				ctrlPatchBus[tmp1]=inbuf*2;
+				ctrlPatchBus[(int)(tmp1)]=(unsigned char)(inbuf*2);
 			}
 			mps=0;
 			break;
@@ -191,7 +191,7 @@ void parse(){
 			mps=16;
 			break;
 		case 16:
-			patchAudioIn[tmp1][tmp2] = inbuf;
+			patchAudioIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
 			mps=0;
 			break;
 		case 17: // Set AudioPatchOut
@@ -203,7 +203,7 @@ void parse(){
 			mps=19;
 			break;
 		case 19:
-			patchAudioOut[tmp1][tmp2] = inbuf;
+			patchAudioOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
 			mps=0;
 			break;
 		case 20: // Set CtrlPatchIn
@@ -215,7 +215,7 @@ void parse(){
 			mps=22;
 			break;
 		case 22:
-			patchCtrlIn[tmp1][tmp2] = inbuf;
+			patchCtrlIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
 			mps=0;
 			break;
 		case 23: // Set CtrlPatchIn
@@ -227,7 +227,7 @@ void parse(){
 			mps=25;
 			break;
 		case 25:
-			patchCtrlOut[tmp1][tmp2] = inbuf;
+			patchCtrlOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)inbuf;
 			mps=0;
 			break;
 		
@@ -261,7 +261,7 @@ void clearBusses(void) {
 	note[2] = 1;
 	gate[0] = 0;
 	gate[1] = 0;
-	gate[3] = 0;
+	gate[2] = 0;
 	pitchBend = 0.0;
 	pitchBendRaw = 0;
 	return;

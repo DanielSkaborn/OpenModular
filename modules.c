@@ -79,8 +79,8 @@
 #define AOUT14	audioPatchBus[patchAudioOut[id][14]]
 #define AOUT15	audioPatchBus[patchAudioOut[id][15]]
 
-#define GATE	patchGate[id]
-#define NOTE	patchNote[id]
+#define GATE	gate[patchGate[id]]
+#define NOTE	note[patchNote[id]]
 
 void copymodstrings(int id, char* name, char* CtrlInNames, char* CtrlOutNames, char* AudInNames, char* AudOutNames){
 	int i;
@@ -101,10 +101,11 @@ void copymodstrings(int id, char* name, char* CtrlInNames, char* CtrlOutNames, c
 
 // an amplifier and peak follower
 void module_Gain(int id) { 
-	volatile static char peak;
-	volatile char newpeak;
+	volatile static char peak=0;
+	volatile char newpeak=0;
 	
-	AOUT0 = AIN0 * CIN0/127.0;
+	AOUT0 = AIN0 * CIN0/256.0;
+	AOUT1 = AIN1 * CIN0/256.0;
 	
 	newpeak=(unsigned char)(AOUT0*127);
 	if (peak<newpeak)
@@ -118,15 +119,15 @@ void regModule_Gain(int id) {
 //                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char CtrlInNames[4*MAXCTRLIN+1]   = "GAIN                                                            \0";
 	char CtrlOutNames[4*MAXCTRLOUT+1] = "PEAK                                                            \0";
-	char AudInNames[4*MAXAUDIIN+1]    = "IN              \0"; 	
-	char AudOutNames[4*MAXAUDIOUT+1]  = "OUT             \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "IN1 IN2         \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "OUT1OUT2        \0";
 //               "        \0";
 	char name[9]="GAIN    \0";
 	
 	modCtrlIns[id]     = 1;
 	modCtrlOuts[id]    = 1;
-	modAudIns[id]      = 1;
-	modAudOuts[id]     = 1;
+	modAudIns[id]      = 2;
+	modAudOuts[id]     = 2;
 	
 	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
 	return;
@@ -140,17 +141,16 @@ void module_ADSR(int id) {
 	// COUT0 : ADSRcontrol
 	// GATE  : Trig on gate #
 	
-	volatile static int counter, state;
-	volatile static unsigned char lastgate;
-	volatile static float d, signal, sustain;
+	volatile static int state=0;
+	volatile static unsigned char lastgate=0;
+	volatile static float d=0, signal=0, sustain=0;
+
 	// Gate signal trigging
-	if ((lastgate==0) && (GATE!=0)) {
-		lastgate=1;
+	if ( (lastgate==0) && (GATE!=0) ) {
 		state=1; // Attack
 	}
 	if ((lastgate!=0) && (GATE==0)) {
 		state=6; // Release
-		lastgate=GATE;
 	}
 	
 	switch (state) {
@@ -158,8 +158,8 @@ void module_ADSR(int id) {
 			signal = 0.0f;
 			break;
 		case 1: // Attack calculate
-			d=255.0f/(SAMPLERATEF/255.0f * (float)(CIN0));
-			signal = 0.0f;
+			d=255.0f/(SAMPLERATEF/255.0f * (float)(CIN0+1));
+//			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -191,6 +191,7 @@ void module_ADSR(int id) {
 			}
 			break;
 		default:
+			signal = 0.0f;
 			state=0;
 			break;
 	} //switch
@@ -217,29 +218,13 @@ void regModule_ADSR(int id) {
 	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
 	return;
 }
-/*
-void moduleGainInit(int id) {
-	
-	// What does this module support
-	modCtrlIns[id]			= 1;
-	modCtrlInsName[id][]	= {"GAIN\0"};
-	modCtrlOuts[id] 		= 1;
-	modCtrlOutsName[id][]	= {"PEAK\0"};
-	modAudIns[id]			= 1;
-	modAudInsName[id][]		= {"IN  \0"};
-	modAudOuts[id]			= 1;
-	modAudOutsName[id][]	= {"OUT \0"};
-	// put a function pointer to the process function in the OpenModular registry
-//	modProcessPtr[id]		= (void (*)(int)) ModuleExampleProcess;
-}
-*/
 
 void module_LFO(int id) {
 	// CIN0	 : 1/rate
 	// CIN1  : max
 
-	volatile static int counter;
-	volatile static int dir;
+	volatile static int counter=0;
+	volatile static int dir=0;
 	
 	counter++;
 	if (counter>CIN0*50) {
@@ -272,26 +257,101 @@ void regModule_LFO(int id) {
 	return;
 }
 
+void module_Smoothie(int id) {
+	// Smoothie makes controller changes smooth, and it also interleaves
+	// the changes, useful to limit CPU load of filter constants calculations
+	// CIN0
+	//  ...
+	// CIN9
+	// COUT0
+	//  ...
+	// COUT9
+
+
+	volatile static int counter=0;
+	
+	counter++;
+	if (counter>100) counter=0;
+	switch (counter) {
+		case 1:
+			if ( CIN0 > COUT0 ) COUT0++;
+			if ( CIN0 < COUT0 ) COUT0--;
+			break;
+		case 2:
+			if ( CIN1 > COUT1 ) COUT1++;
+			if ( CIN1 < COUT1 ) COUT1--;
+			break;
+		case 3:
+			if ( CIN2 > COUT2 ) COUT2++;
+			if ( CIN2 < COUT2 ) COUT2--;
+			break;
+		case 4:
+			if ( CIN3 > COUT3 ) COUT3++;
+			if ( CIN3 < COUT3 ) COUT3--;
+			break;
+		case 5:
+			if ( CIN4 > COUT4 ) COUT4++;
+			if ( CIN4 < COUT4 ) COUT4--;
+			break;
+		case 6:
+			if ( CIN5 > COUT5 ) COUT5++;
+			if ( CIN5 < COUT5 ) COUT5--;
+			break;
+		case 7:
+			if ( CIN6 > COUT6 ) COUT6++;
+			if ( CIN6 < COUT6 ) COUT6--;
+			break;
+		case 8:
+			if ( CIN7 > COUT7 ) COUT7++;
+			if ( CIN7 < COUT7 ) COUT7--;
+			break;
+		case 9:
+			if ( CIN8 > COUT8 ) COUT8++;
+			if ( CIN8 < COUT8 ) COUT8--;
+			break;
+		case 10:
+			if ( CIN9 > COUT9 ) COUT9++;
+			if ( CIN9 < COUT9 ) COUT9--;
+			break;
+		default:
+			break;
+	}
+	
+	return;
+}
+
+void regModule_Smoothie(int id) {
+	moduleRegistry[id] = module_Smoothie;
+//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char CtrlInNames[4*MAXCTRLIN+1]   = "IN0 IN1 IN2 IN3 IN4 IN5 IN6 IN7 IN8 IN9                         \0";
+	char CtrlOutNames[4*MAXCTRLOUT+1] = "OUT0OUT1OUT2OUT3OUT4OUT5OUT6OUT7OUT8OUT9                        \0";
+	char AudInNames[4*MAXAUDIIN+1]    = "                \0"; 	
+	char AudOutNames[4*MAXAUDIOUT+1]  = "                \0";
+//               "        \0";
+	char name[9]="SMOOTHIE\0";
+	
+	modCtrlIns[id]     = 10;
+	modCtrlOuts[id]    = 10;
+	modAudIns[id]      = 0;
+	modAudOuts[id]     = 0;
+	
+	copymodstrings(id, name, CtrlInNames, CtrlOutNames, AudInNames, AudOutNames);
+	return;
+}
+
 void module_SampleAndHold(int id) {
 	//AIN0   : Source to sample
 	//COUT0  : SampleAndHold output
 	
-	volatile static int counter;
-	volatile unsigned char target;
+	volatile static int counter=0;
+//	volatile unsigned char target;
+
 	counter++;
 	if (counter>SAMPLERATE/2) {
 		COUT0 = (AIN0+1.0) * 128;
 		counter = 0;
 	}
-/*
-	if (COUT0 > target) {
-		COUT0=COUT0-1;
-	}
-	if (COUT0 < target) {
-		COUT0=COUT0+1;
-	}
-*/	
-//	printf("%d %d ",target, COUT0);
+
 	return;
 }
 void regModule_SampleAndHold(int id) {
@@ -323,12 +383,12 @@ void moduleMoogFilter(int id) {
 
 //fs = sampling frequency //(e.g. 44100Hz)
 
-	static unsigned char lastcin0, lastcin1;
+	static unsigned char lastcin0=0, lastcin1=0;
 
-	static float cutoff; // Hz
-	static float res; // [0 - 1] //(minimum - maximum)
-	static float f, k, p, scale, r;
-	static float y1, y2, y3, y4, oldy1, oldy2, oldy3;
+	static float cutoff=0; // Hz
+	static float res=0; // [0 - 1] //(minimum - maximum)
+	static float f=0, k=0, p=0, scale=0, r=0;
+	static float y1=0, y2=0, y3=0, y4=0, oldy1=0, oldy2=0, oldy3=0;
 
 // parameters
 
@@ -368,8 +428,8 @@ void moduleMoogFilter(int id) {
 */
 
 void module_Sequencer(int id) {
-	volatile static int step;
-	volatile static int counter;
+	volatile static int step = 0;
+	volatile static int counter = -1;
 	
 	counter++;
 	if (counter > SAMPLERATE/10) {
@@ -451,22 +511,22 @@ void module_Filter1(int id) {
 	// CIN0	 : CUTOFF FREQUENCY
 	// CIN1  : RESONANCE
 
-	volatile static unsigned char lastcin0, lastcin1;
+	volatile static unsigned char lastcin0 = 0;
+	volatile static unsigned char lastcin1 = 0;
 	
-	volatile static float frequency, resonance;
-	volatile static float freqinhz;
-	volatile static float f, p, q;             //filter coefficients
-	volatile static float in, b0, b1, b2, b3, b4;  //filter buffers (beware denormals!)
-	volatile static float t1, t2;              //temporary buffers
+	volatile static float frequency=0, resonance=0;
+	volatile static float freqinhz=0;
+	volatile static float f=0, p=0, q=0;             //filter coefficients
+	volatile static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
+	volatile static float t1=0, t2=0;              //temporary buffers
 	
-
 	// Set coefficients given frequency & resonance [0.0...1.0]
 	if ((CIN0 != lastcin0) || (CIN1 != lastcin1)) {
-		lastcin0=CIN0; lastcin1=CIN1;
-		freqinhz = CIN0 * 3.90625;	// 0 to 1000Hz
-		frequency = freqinhz * (1.0/( SAMPLERATEF/2.0));
-		resonance = CIN1 / 256.0;	// 0 to 1
-				
+		lastcin0 = CIN0; lastcin1 = CIN1;
+		freqinhz = (float)(CIN0) * 3.90625;	// 0 to 1000Hz
+		frequency = freqinhz * ( 1.0 / ( SAMPLERATEF/2.0) );
+		resonance = (float)(CIN1) / 256.0;	// 0 to 1
+
 		q = 1.0 - frequency;
 		p = frequency + 0.8 * frequency * q;
 		f = p + p - 1.0;
@@ -524,11 +584,11 @@ void module_Filter2(int id) {
 
 	volatile static unsigned char lastcin0, lastcin1;
 	
-	volatile static float frequency, resonance;
-	volatile static float freqinhz;
-	volatile static float f, p, q;             //filter coefficients
-	volatile static float in, b0, b1, b2, b3, b4;  //filter buffers (beware denormals!)
-	volatile static float t1, t2;              //temporary buffers
+	volatile static float frequency=0, resonance=0;
+	volatile static float freqinhz=0;
+	volatile static float f=0, p=0, q=0;             //filter coefficients
+	volatile static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
+	volatile static float t1=0, t2=0;              //temporary buffers
 	
 
 	// Set coefficients given frequency & resonance [0.0...1.0]
@@ -586,16 +646,17 @@ void module_Oscilator1(int id) {
 	// CIN0	 : PULSEWIDTH
 	// CIN1  : FINETUNE
 
-	volatile static float freq, accfreq;
-	volatile static float d;
-	volatile static float pw;
-	volatile static int basictone, octave;
-	volatile static unsigned char lastnote;
-	volatile int i;
+	volatile static float freq=0, accfreq=0;
+	volatile static float d=0;
+	volatile static float pw=0;
+	volatile static int basictone=0, octave=0;
+	volatile static unsigned char lastnote=0;
+	volatile int i=0;
 	
-	if (note[0]!=lastnote) {
+	if (NOTE!=lastnote) {
 		basictone	= NOTE%12; // attach this oscillator to the decoded voice
 		octave		= NOTE/12;
+		lastnote=NOTE;
 	
 		// lookuptable, basictone to frequency (HZ)
 		switch(basictone) {
@@ -676,12 +737,12 @@ void module_Oscilator2(int id) {
 	// CIN0	 : PULSEWIDTH
 	// CIN1  : FINETUNE
 
-	volatile static float freq, accfreq;
-	volatile static float d;
-	volatile static float pw;
-	volatile static int basictone, octave;
-	volatile static unsigned char lastnote;
-	volatile int i;
+	volatile static float freq=0, accfreq=0;
+	volatile static float d=0;
+	volatile static float pw=0;
+	volatile static int basictone=0, octave=0;
+	volatile static unsigned char lastnote=0;
+	volatile int i=0;
 	
 	if (note[1]!=lastnote) {
 		basictone	= NOTE%12; // attach this oscillator to the decoded voice
@@ -758,47 +819,37 @@ void regModule_Oscilator2(int id) {
 void presetPatches(unsigned char prg) {
 	if (prg==0) {
 		patchAudioOut[0][0] = 2;
-		patchAudioOut[0][1] = 0;
-		patchCtrlIn[0][0]   = 134;
-		patchCtrlIn[0][1]   = 130;
+		patchAudioOut[0][1] = 3;
+		patchCtrlIn[0][0]   = 133;
+		patchCtrlIn[0][1]   = 134;
 		patchNote[0]        = 0;
-
-		patchAudioOut[4][0] = 1;
-		patchAudioOut[4][1] = 3;
-		patchCtrlIn[4][0]   = 130;
-		patchCtrlIn[4][1]   = 130;
-		patchNote[4]        = 1;
-
-		/*
+		
 		patchAudioIn[3][0]  = 2;
-		patchAudioOut[3][0] = 0;
-		patchAudioOut[3][1] = 10;
-		patchAudioOut[3][2] = 11;
-		patchCtrlIn[3][0]   = 130;
-		patchCtrlIn[3][1]   = 131;
-*/
-		patchCtrlIn[2][0]   = 140;
-		patchCtrlIn[2][1]   = 141;
-		patchCtrlOut[2][0]  = 130;
+		patchCtrlOut[3][0]  = 132;
+		
+		patchCtrlIn[2][0]   = 132;
+		patchCtrlIn[2][5]   = 132;
+		patchCtrlOut[2][0]  = 133;
+		patchCtrlOut[2][5]  = 134;
+		
+		patchCtrlIn[4][0]	= 140;
+		patchCtrlIn[4][1]	= 141;
+		patchCtrlIn[4][2]	= 142;
+		patchCtrlIn[4][3]	= 143;
+		patchCtrlOut[4][0]	= 144;
+		patchGate[4]		= 0;
+		
+		patchCtrlIn[5][0]	= 144;
+		patchAudioIn[5][0]  = 2;
+		patchAudioIn[5][1]  = 3;
+		patchAudioOut[5][0] = 0;
+		patchAudioOut[5][1] = 1;
+		
 
-		patchCtrlIn[3][0]   = 150;
-		patchCtrlIn[3][1]   = 151;
-		patchCtrlIn[3][2]   = 152;
-		patchCtrlIn[3][3]   = 153;
-		patchCtrlOut[3][0]  = 154;
-		patchGate[3]        = 0;
-		
-		
-		ctrlPatchBus[140]   = 50;
-		ctrlPatchBus[141]   = 200;
-		ctrlPatchBus[130]   = 100;
-		ctrlPatchBus[131]   = 180;
-		
-		ctrlPatchBus[150]   = 50;
-		ctrlPatchBus[151]   = 80;
-		ctrlPatchBus[152]   = 100;
-		ctrlPatchBus[153]   = 80;
-		
+		ctrlPatchBus[140]	= 20; 
+		ctrlPatchBus[141]	= 250; 
+		ctrlPatchBus[142]	= 150;
+		ctrlPatchBus[143]	= 20;
 	}
 	return;
 }
@@ -809,12 +860,10 @@ void presetPatches(unsigned char prg) {
 void moduleRegistration(void) {
 	regModule_Oscilator1(0);
 	regModule_Sequencer(1);
-	regModule_LFO(2);
-	regModule_ADSR(3);
-	regModule_Oscilator2(4);
-//	regModule_Gain(4);
-//	regModule_Filter1(3);
-	
+	regModule_Smoothie(2);
+	regModule_SampleAndHold(3);
+	regModule_ADSR(4);
+	regModule_Gain(5);
 	
 //	regModule_Gain(0);
 //	regModule_ADSR(1);
@@ -825,7 +874,7 @@ void moduleRegistration(void) {
 //	regModule_SampleAndHold(7);
 //	regModule_Sequencer(8);
 
-	numberOfModules=5;
+	numberOfModules=6;
 
 	return;
 }
