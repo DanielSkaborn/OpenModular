@@ -2,5 +2,8 @@
 Virtual Modular Synth
 
 ##Licence and usage
-Any kind of implementation utilizing the OpenModular core architectur should include OpenModular in the naming.
-For any commercial usage please contact the initiator of the architecture.
+GNU GENERAL PUBLIC LICENSE Version 2
+with some restrictions:
+1. Any kind of implementation utilizing/based on the OpenModular architectur should include OpenModular in the naming.
+2. For any commercial usage please contact the initiator of the architecture.
+
