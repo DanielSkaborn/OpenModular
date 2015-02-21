@@ -148,11 +148,11 @@ void AudioOut(void) {
 	pwmR[PWM_FIF1] = out;
 
 	c++;
-	if (c==220) {
+	if (c==22050) {
 		// Set the GPIO16 output low ( Turn OK LED on )
         gpioR[GPIO_GPCLR0] = (1 << 16);
 	}
-	if (c>440) {
+	if (c>44100) {
 		c=0;
 		// Set the GPIO16 output high ( Turn OK LED off )
         gpioR[GPIO_GPSET0] = (1 << 16);

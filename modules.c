@@ -448,9 +448,11 @@ void module_Sequencer(int id) {
 				break;
 			case 1:
 				note[0]=49;
+				note[1]=49;
 				break;
 			case 2:
 				note[0]=47;
+				note[1]=42;
 				break;
 			case 3:
 				note[0]=42;
@@ -818,38 +820,78 @@ void regModule_Oscilator2(int id) {
 
 void presetPatches(unsigned char prg) {
 	if (prg==0) {
-		patchAudioOut[0][0] = 2;
-		patchAudioOut[0][1] = 3;
-		patchCtrlIn[0][0]   = 133;
-		patchCtrlIn[0][1]   = 134;
-		patchNote[0]        = 0;
 		
-		patchAudioIn[3][0]  = 2;
+		//osc1
+		patchAudioOut[0][0] = 10;
+		patchAudioOut[0][1] = 11;
+		patchCtrlIn[0][0]   = 133;
+		patchCtrlIn[0][1]   = 170;
+		patchNote[0]        = 1;
+		
+		//osc2
+		patchAudioOut[7][0] = 20;
+		patchAudioOut[7][1] = 21;
+		patchCtrlIn[7][0]   = 133;
+		patchCtrlIn[7][1]   = 160;
+		patchNote[7]        = 0;
+		
+		//s&h
+		patchAudioIn[3][0]  = 10;
 		patchCtrlOut[3][0]  = 132;
 		
+		//smoothie
 		patchCtrlIn[2][0]   = 132;
 		patchCtrlIn[2][5]   = 132;
 		patchCtrlOut[2][0]  = 133;
 		patchCtrlOut[2][5]  = 134;
-		
+
+		//ADSR
 		patchCtrlIn[4][0]	= 140;
 		patchCtrlIn[4][1]	= 141;
 		patchCtrlIn[4][2]	= 142;
 		patchCtrlIn[4][3]	= 143;
 		patchCtrlOut[4][0]	= 144;
 		patchGate[4]		= 0;
-		
+
+		//gain
 		patchCtrlIn[5][0]	= 144;
-		patchAudioIn[5][0]  = 2;
+		patchAudioIn[5][0]  = 3;
 		patchAudioIn[5][1]  = 3;
 		patchAudioOut[5][0] = 0;
-		patchAudioOut[5][1] = 1;
+		patchAudioOut[5][1] = 30;
 		
+		//filter1
+		patchAudioIn[6][0]  = 10;
+		patchAudioOut[6][0] = 3;
+		patchAudioOut[6][1] = 11;
+		patchAudioOut[6][2] = 12;
+		patchCtrlIn[6][0]   = 133;
+		patchCtrlIn[6][1]   = 165;
 
-		ctrlPatchBus[140]	= 20; 
-		ctrlPatchBus[141]	= 250; 
-		ctrlPatchBus[142]	= 150;
-		ctrlPatchBus[143]	= 20;
+		//filter2
+		patchAudioIn[8][0]  = 20;
+		patchAudioOut[8][0] = 1;
+		patchAudioOut[8][1] = 21;
+		patchAudioOut[8][2] = 22;
+		patchCtrlIn[8][0]   = 163;
+		patchCtrlIn[8][1]   = 164;
+
+		//lfo
+		patchCtrlIn[9][0]	= 161;
+		patchCtrlIn[9][1]	= 162;
+		patchCtrlOut[9][0]  = 163;
+
+		ctrlPatchBus[140]	= 30; 
+		ctrlPatchBus[141]	= 100; 
+		ctrlPatchBus[142]	= 50;
+		ctrlPatchBus[143]	= 100;
+		
+		ctrlPatchBus[170]	= 120;
+		ctrlPatchBus[160]	= 128;
+		ctrlPatchBus[161]	= 70;
+		ctrlPatchBus[162]	= 200;
+		ctrlPatchBus[164]	= 180;
+		ctrlPatchBus[165]	= 10;
 	}
 	return;
 }
@@ -864,17 +906,21 @@ void moduleRegistration(void) {
 	regModule_SampleAndHold(3);
 	regModule_ADSR(4);
 	regModule_Gain(5);
+	regModule_Filter1(6);
+	regModule_Oscilator2(7);
+	regModule_Filter2(8);
+	regModule_LFO(9);
 	
 //	regModule_Gain(0);
 //	regModule_ADSR(1);
-//	regModule_Oscilator2(3);
+//	
 //	regModule_Filter1(4);
 //	regModule_Filter2(5);
 //	regModule_LFO(6);
 //	regModule_SampleAndHold(7);
 //	regModule_Sequencer(8);
 
-	numberOfModules=6;
+	numberOfModules=10;
 
 	return;
 }

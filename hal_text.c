@@ -31,8 +31,8 @@ void busspy(int bus) {
 }
 
 void AudioOut(void) {
-	busspy(130);
-	printf("%03d %03d ",note[0],note[1]);
+	busspy(144);
+	printf("%03d-%03d %03d-%03d  ",note[0],gate[0],note[1],gate[1]);
 	printf("%f\t%f\n", audioPatchBus[0], audioPatchBus[1]);
 	return;
 }
