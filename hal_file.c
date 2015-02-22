@@ -4,9 +4,13 @@
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
-
-#define SAMPLERATE		96000
-#define SAMPLERATEF		96000.0f
+/*
+#define OVERSAMPLE			4
+#define SAMPLERATEOUT		44100
+#define SAMPLERATEOUTF		44100.0f
+*/
+#define SAMPLERATE		44100
+#define SAMPLERATEF		44100.0f
 
 #include <stdio.h>
 int MIDIdataavail(void) { // pollcheck of MIDI input
@@ -27,32 +31,34 @@ int AudioFIFOfull(void) {
 	return 0;
 }
 void busspy(int bus) {
-	printf("%03d:%03f ",bus,patchBus[bus][togglerOut]);
+	printf("%03d %03f ",bus,patchBus[bus][togglerOut]);
 }
 
 void AudioOut(void) {
-	static int c=0;
-		static FILE* f=NULL;
 	
-	int16_t temp;
+	volatile static int c=0;
+	static FILE* f=NULL;
+	int16_t temp=0;
 	
 	if (f==NULL) {
 		f = fopen("OpenModularAudio.bin", "wb");
 		fseek(f, 0, SEEK_SET);
 		printf("Writing file\n");
 	}
-	
-	c++;
+
 	temp = (int16_t)(patchBus[0][togglerOut]*32767);
-    fwrite(&temp, sizeof(temp), 1, f);
-    temp = (int16_t)(patchBus[1][togglerOut]*32767);
-    fwrite(&temp, sizeof(temp), 1, f);
+	fwrite(&temp, sizeof(temp), 1, f);
+	
+	temp = (int16_t)(patchBus[1][togglerOut]*32767);
+	fwrite(&temp, sizeof(temp), 1, f);
+    c++;
     
-	if (c==SAMPLERATE*30) {
+	if (c==SAMPLERATE*60) {
 		fclose(f);
 		printf("Closed file OpenModularAudio.bin\n");
+		while(1) ;
 	}
-		
+	
 	return;
 }
 

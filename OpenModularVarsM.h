@@ -50,3 +50,24 @@ volatile unsigned char	modInsName[MAXMODS][4*MAXIN+1];
 volatile unsigned char	modOutsName[MAXMODS][4*MAXOUT+1];
 
 volatile int 	numberOfModules;
+
+float noteToFreqLUT[128];
+
+void makeNoteToFreqLUT(float masterTune) {
+	int i;
+	float tempFreq;
+	
+	tempFreq=440.0+(masterTune*2.0);
+	
+	for (i=69;i<128;i++) {
+		noteToFreqLUT[i]=tempFreq;
+		tempFreq*=1.0594631;
+	}
+	tempFreq=440.0+(masterTune*2.0);
+	for (i=68;i>0;i--) {
+		tempFreq/=1.0594631;
+		noteToFreqLUT[i]=tempFreq;
+	}
+	return;
+}
+

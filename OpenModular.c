@@ -252,6 +252,7 @@ void clearPatches(void) {
 void mainOpenModular(void) {	
 	int i;
 	
+	makeNoteToFreqLUT(0);
 	moduleRegistration();
 	clearPatches();
 	clearBusses();
