@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 // receive MIDIchannel-1 (0 to 15)
-#define CHANNEL 1
+#define CHANNEL 0
 #define OPMODMFG1	0x7F
 #define OPMODMFG2	0x7F
 #define OPMODMFG3	0x7F
@@ -19,17 +19,18 @@ void mainOpenModular(void);
 #include "OpenModularVarsM.h"
 //#include "hal_text.c"
 //#include "hal_RPi.c"
-#include "hal_file.c"
+//#include "hal_file.c"
+#include "hal_alsa.c"
 #include "modules.c"
 
 void sendModulesInfo(void) {
 	int id,i;
 	
-	MIDIout( 0xF0 );				// SysEx
+	MIDIout( 0xF0 );			// SysEx
 	MIDIout( OPMODMFG1 );
 	MIDIout( OPMODMFG2 );
 	MIDIout( OPMODMFG3 );
-	MIDIout( 0x07 );				// Modules information
+	MIDIout( 0x07 );			// Modules information
 	MIDIout( numberOfModules );	// Number of modules
 	for (id=0 ; id<numberOfModules ; id++) {
 		MIDIout( id );
@@ -75,13 +76,14 @@ void sendPatchDump(void) {
 	return;
 }
 
-void parse(){
+void parse(unsigned char inbuf){
 	static int mps=0;
 	char tmp1=0, tmp2=0;
-	
-	unsigned char inbuf;
+	/*
 	inbuf = MIDIrcv();
-	
+	printf("0x%02x\n",inbuf);
+	*/
+	printf("parse 0x%02x\n",inbuf);
 	switch (mps) {
 		case 0: // wait for any data
 			if (inbuf == (0xB0+CHANNEL)) mps=1; // CC
@@ -109,6 +111,7 @@ void parse(){
 		case 3: // Note On
 			tmp1 = inbuf;
 			mps=4;
+			printf("noteon\n");
 			break;
 		case 4: // Note On velocity
 			if (inbuf==0) { // Note off
@@ -251,18 +254,20 @@ void clearPatches(void) {
 	
 void mainOpenModular(void) {	
 	int i;
-	
+	unsigned char mididata;
 	makeNoteToFreqLUT(0);
 	moduleRegistration();
 	clearPatches();
 	clearBusses();
 	presetPatches(0);
 
+	sendModulesInfo();
 	
 	while(1) { // forever loop
-		if(MIDIdataavail()) {
-			parse();
-		}
+	
+/*		if( MIDIin(&mididata)==1 ) {
+			parse(mididata);
+		}*/
 		if(AudioFIFOfull()==0) {
 
 			// Toggle bus

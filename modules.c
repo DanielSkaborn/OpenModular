@@ -441,7 +441,7 @@ void module_Sequencer(int id) {
 				gate[1]=0;
 				break;
 			case 4:
-				note[0]=49;
+				note[0]=47;
 				break;
 			case 5:
 				note[0]=47;
@@ -754,25 +754,25 @@ void presetPatches(unsigned char prg) {
 		//osc1
 		patchOut[0][0]	= 20;
 		patchOut[0][1]	= 10;
-		patchIn[0][0]	= 1;
+		patchIn[0][0]	= 160;
 		patchIn[0][1]	= 131;
 		patchNote[0]	= 0;
-		
+
 		//osc2
 		patchOut[7][0]	= 21; 
 		patchOut[7][1]	= 11;
 		patchIn[7][0]	= 140;//130;
-		patchIn[7][1]	= 10;
+		patchIn[7][1]	= 130;
 		patchNote[7]	= 1;
 		
 		setPB(130,0.3);
 		setPB(131,0);
-		
+
 		// filter1
 		patchIn[6][0]	= 20;  // signal in
 		patchIn[6][1]	= 145; // CF
 		patchIn[6][2]	= 146; // res
-		patchOut[6][0]	= 0;
+		patchOut[6][0]	= 1;
 		patchOut[6][1]	= DUMP;
 		patchOut[6][2]	= DUMP;
 		
@@ -780,12 +780,17 @@ void presetPatches(unsigned char prg) {
 		patchIn[8][0]	= 11;  // signal in
 		patchIn[8][1]	= 140; // CF
 		patchIn[8][2]	= 146; // res
-		patchOut[8][0]	= 1;
+		patchOut[8][0]	= 0;
 		patchOut[8][1]	= DUMP;
 		patchOut[8][2]	= DUMP;
 		setPB(141,0.8);
 		setPB(140,0.6);
 
+		patchIn[5][0]   = 9;
+		patchIn[5][1]   = 8;
+		patchIn[5][2]   = 21;
+		patchOut[5][0]  = DUMP;
+		patchOut[5][1]  = DUMP;
 		
 		//LFO
 		patchIn[9][0]	= 142;
@@ -802,7 +807,9 @@ void presetPatches(unsigned char prg) {
 		
 		setPB(144,0.5);
 		setPB(146,0.0);
+
 	}
+	
 	return;
 }
 

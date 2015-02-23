@@ -13,18 +13,48 @@
 #define SAMPLERATEF		44100.0f
 
 #include <stdio.h>
-int MIDIdataavail(void) { // pollcheck of MIDI input
-		return 0;
+#include <fcntl.h>
+#include <unistd.h>
+
+#define MIDIDEVICE		"/dev/snd/midiC1D0"
+int MIDIin_d;
+int MIDIout_d;
+unsigned char globalmididata;
+
+int MIDIinit(void) {
+
+	int flags;
+ 	MIDIin_d  = open(MIDIDEVICE,O_RDONLY, 0);
+	MIDIout_d = open(MIDIDEVICE,O_WRONLY,0);
+
+	flags = fcntl(MIDIin_d, F_GETFL, 0);
+	fcntl(MIDIin_d, F_SETFL, flags | O_NONBLOCK);
+
 }
-unsigned char MIDIrcv(void) {
+
+int MIDIdataavail(void) {
+	int ret;
+	ret = read(MIDIin_d, &globalmididata, 1 );
+//	if (ret==1) printf("%d\n",globalmididata);
 	return 0;
 }
+unsigned char MIDIrcv(void) {
+	return globalmididata;
+}
+
+int MIDIin(unsigned char *data) {
+	return read(MIDIin_d, data, 1 );
+}
+
+
 void MIDIout(unsigned char outbuf) {
 	unsigned char temp;
-	temp = outbuf;
-	if (temp&0x80) printf("\n");
+	
+	write(MIDIout_d, &outbuf, 1);
+/*	
+	if (outbuf&0x80) printf("\n");
 	printf("%02X ",outbuf);
-	return;
+*/	return;
 }
 
 int AudioFIFOfull(void) {
@@ -53,15 +83,15 @@ void AudioOut(void) {
 	fwrite(&temp, sizeof(temp), 1, f);
     c++;
     
-	if (c==SAMPLERATE*60) {
+	if (c==SAMPLERATE*90) {
 		fclose(f);
 		printf("Closed file OpenModularAudio.bin\n");
-		while(1) ;
 	}
 	
 	return;
 }
 
 int main(void) {
+	MIDIinit();
 	mainOpenModular();
 }

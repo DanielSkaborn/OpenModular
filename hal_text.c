@@ -9,16 +9,41 @@
 #define SAMPLERATEF		44100.0f
 
 #include <stdio.h>
+
+#define MIDIDEVICE		"/dev/snd/midiC1D0"
+int MIDIin_d;
+int MIDIout_d;
+
+
+int MIDIinit(void) {
+	MIDIin_d  = open(MIDIDEVICE,O_RDONLY, 0);
+	MIDIout_d = open(MIDIDEVICE,O_WRONLY,0);
+}
+
+unsigned char globalmididata;
 int MIDIdataavail(void) { // pollcheck of MIDI input
-		return 0;
+	
+	return read(MIDIin_d, &globmididata, 1 );
+//	return 0;
 }
 unsigned char MIDIrcv(void) {
-	return 0;
+	return globmididata;
 }
+int MIDIin(unsigned char &data) {
+//	int ret;
+	
+	return read(MIDIin_d, &data, 1 );
+//	if (ret) printf("%02x ",data);
+//	return ret;
+}
+
+
 void MIDIout(unsigned char outbuf) {
 	unsigned char temp;
-	temp = outbuf;
-	if (temp&0x80) printf("\n");
+	
+	write(wd, &outbuf, 1);
+	
+	if (outbuf&0x80) printf("\n");
 	printf("%02X ",outbuf);
 	return;
 }
