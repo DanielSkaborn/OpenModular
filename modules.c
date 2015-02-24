@@ -10,46 +10,7 @@
 
 #define e		2.718281828459045
 
-// To simplify and ease reading, define som macros of the signals this module use
 
-#define AIN0	patchBus[patchIn[id][0]][togglerIn]
-#define AIN1	patchBus[patchIn[id][1]][togglerIn]
-#define AIN2	patchBus[patchIn[id][2]][togglerIn]
-#define AIN3	patchBus[patchIn[id][3]][togglerIn]
-#define AIN4	patchBus[patchIn[id][4]][togglerIn]
-#define AIN5	patchBus[patchIn[id][5]][togglerIn]
-#define AIN6	patchBus[patchIn[id][6]][togglerIn]
-#define AIN7	patchBus[patchIn[id][7]][togglerIn]
-#define AIN8	patchBus[patchIn[id][8]][togglerIn]
-#define AIN9	patchBus[patchIn[id][9]][togglerIn]
-#define AIN10	patchBus[patchIn[id][10]][togglerIn]
-#define AIN11	patchBus[patchIn[id][11]][togglerIn]
-#define AIN12	patchBus[patchIn[id][12]][togglerIn]
-#define AIN13	patchBus[patchIn[id][13]][togglerIn]
-#define AIN14	patchBus[patchIn[id][14]][togglerIn]
-#define AIN15	patchBus[patchIn[id][15]][togglerIn]
-
-#define AOUT0	patchBus[patchOut[id][0]][togglerOut]
-#define AOUT1	patchBus[patchOut[id][1]][togglerOut]
-#define AOUT2	patchBus[patchOut[id][2]][togglerOut]
-#define AOUT3	patchBus[patchOut[id][3]][togglerOut]
-#define AOUT4	patchBus[patchOut[id][4]][togglerOut]
-#define AOUT5	patchBus[patchOut[id][5]][togglerOut]
-#define AOUT6	patchBus[patchOut[id][6]][togglerOut]
-#define AOUT7	patchBus[patchOut[id][7]][togglerOut]
-#define AOUT8	patchBus[patchOut[id][8]][togglerOut]
-#define AOUT9	patchBus[patchOut[id][9]][togglerOut]
-#define AOUT10	patchBus[patchOut[id][10]][togglerOut]
-#define AOUT11	patchBus[patchOut[id][11]][togglerOut]
-#define AOUT12	patchBus[patchOut[id][12]][togglerOut]
-#define AOUT13	patchBus[patchOut[id][13]][togglerOut]
-#define AOUT14	patchBus[patchOut[id][14]][togglerOut]
-#define AOUT15	patchBus[patchOut[id][15]][togglerOut]
-
-#define GATE	gate[patchGate[id]]
-#define NOTE	note[patchNote[id]]
-
-#define DUMP	NOPATCHBUS-1
 
 float notetofreqLUT(unsigned char theNote) {
 	
@@ -664,7 +625,10 @@ void module_Oscilator1(int id) {
 		AOUT1 = 1.0;
 	else
 		AOUT1 = -1.0;
-
+/*
+	AOUT0 = AOUT0 * (GATE/127.0);
+	AOUT1 = AOUT1 * (GATE/127.0);
+*/
 	return;
 }
 void regModule_Oscilator1(int id) {
@@ -720,7 +684,10 @@ void module_Oscilator2(int id) {
 		AOUT1=1.0;
 	else
 		AOUT1=-1.0;
-
+/*		
+	AOUT0 = AOUT0 * (GATE/127.0);
+	AOUT1 = AOUT1 * (GATE/127.0);
+*/
 	return;
 }
 void regModule_Oscilator2(int id) {
@@ -747,67 +714,53 @@ void setPB(int bus, float v) {
 
 void presetPatches(unsigned char prg) {
 	if (prg==0) {
-// AOUT0 : SAWUP
-// AOUT1 : SQUARE PWM
-// AIN0	 : PULSEWIDTH
-// AIN1  : FINETUNE
+
 		//osc1
-		patchOut[0][0]	= 0;
-		patchOut[0][1]	= 10;
-		patchIn[0][0]	= 160;
-		patchIn[0][1]	= 131;
+		patchIn[0][0]	= 0xa;  // PW
+		patchIn[0][1]	= 0x2;	// TUNE
+		patchOut[0][0]	= 199;	// SAW
+		patchOut[0][1]	= 200;	// SQR
 		patchNote[0]	= 0;
-
-		//osc2
-		patchOut[1][0]	= 1; 
-		patchOut[1][1]	= 11;
-		patchIn[1][0]	= 140;//130;
-		patchIn[1][1]	= 130;
-		patchNote[1]	= 1;
+		patchGate[0]	= 0;
 		
-		setPB(130,0.3);
-		setPB(131,0);
-
-		// filter1
-		patchIn[6][0]	= 20;  // signal in
-		patchIn[6][1]	= 145; // CF
-		patchIn[6][2]	= 146; // res
-		patchOut[6][0]	= 1;
+		//osc2
+		patchIn[1][0]	= 0x5c; // PW
+		patchIn[1][1]	= 0x5f;	// TUNE
+		patchOut[1][0]	= 198; // SAW
+		patchOut[1][1]	= 201;	// SQR
+		patchNote[1]	= 1;
+		patchGate[1]	= 1;
+		
+		// filter1 6
+		patchIn[6][0]	= 200;  // signal in
+		patchIn[6][1]	= 0x10; // CF
+		patchIn[6][2]	= 0x11; // res
+		patchOut[6][0]	= OUTL;
 		patchOut[6][1]	= DUMP;
 		patchOut[6][2]	= DUMP;
 		
-		// filter2
-		patchIn[8][0]	= 11;  // signal in
-		patchIn[8][1]	= 140; // CF
-		patchIn[8][2]	= 146; // res
-		patchOut[8][0]	= 0;
-		patchOut[8][1]	= DUMP;
-		patchOut[8][2]	= DUMP;
-		setPB(141,0.8);
-		setPB(140,0.6);
+		// filter2 7
+		patchIn[7][0]	= 198;  // signal in
+		patchIn[7][1]	= 0x12; // CF
+		patchIn[7][2]	= 0x13; // res
+		patchOut[7][0]	= OUTR;
+		patchOut[7][1]	= DUMP;
+		patchOut[7][2]	= DUMP;
 
-		patchIn[5][0]   = 9;
-		patchIn[5][1]   = 8;
-		patchIn[5][2]   = 21;
-		patchOut[5][0]  = DUMP;
-		patchOut[5][1]  = DUMP;
-		
-		//LFO
-		patchIn[9][0]	= 142;
-		patchIn[9][1]	= 143;
-		patchOut[9][0]	= 140;
-		
-		setPB(142,-0.2);
-		setPB(143,0.98);
-		
-		//LFO2
-		patchIn[10][0]	= 144;
-		patchIn[10][1]	= 143;
-		patchOut[10][0]	= 145;
-		
-		setPB(144,0.5);
-		setPB(146,0.0);
+		//ADSR 4
+		patchIn[4][0]	= 0x49;	//A
+		patchIn[4][1]	= 0x9;	//D
+		patchIn[4][2]	= 0xc;	//S
+		patchIn[4][3]	= 0x48;	//R
+		patchOut[4][0]	= 131;	//ENV
+		patchGate[4]	= 0;
 
+		//GAIN 5
+		patchIn[5][0]	= 200;	// SIGNAL1
+		patchIn[5][1]	= 201;	// SIGNAL2
+		patchIn[5][2]	= 131;	// GAIN
+		patchOut[5][0]	= DUMP;
+		patchOut[5][1]	= DUMP;
 	}
 	
 	return;
@@ -819,17 +772,15 @@ void presetPatches(unsigned char prg) {
 void moduleRegistration(void) {
 	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
-	regModule_Sequencer(2);
-/*	regModule_Smoothie(2);
+	regModule_Smoothie(2);
 	regModule_SampleAndHold(3);
 	regModule_ADSR(4);
 	regModule_Gain(5);
 	regModule_Filter1(6);
+	regModule_Filter2(7);
+	regModule_LFO(8);
+	regModule_LFO2(9);
 	
-	regModule_Filter2(8);
-	regModule_LFO(9);
-	regModule_LFO2(10);
-	*/
 //	regModule_Gain(0);
 //	regModule_ADSR(1);
 //	
@@ -839,7 +790,7 @@ void moduleRegistration(void) {
 //	regModule_SampleAndHold(7);
 //	regModule_Sequencer(8);
 
-	numberOfModules=3;
+	numberOfModules=10;
 
 	return;
 }

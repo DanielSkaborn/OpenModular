@@ -78,12 +78,9 @@ void sendPatchDump(void) {
 
 void parse(unsigned char inbuf){
 	static int mps=0;
-	char tmp1=0, tmp2=0;
-	/*
-	inbuf = MIDIrcv();
-	printf("0x%02x\n",inbuf);
-	*/
-	printf("parse 0x%02x\n",inbuf);
+	static char tmp1=0, tmp2=0;
+
+	//printf("parse 0x%02x\n",inbuf);
 	switch (mps) {
 		case 0: // wait for any data
 			if (inbuf == (0xB0+CHANNEL)) mps=1; // CC
@@ -103,29 +100,30 @@ void parse(unsigned char inbuf){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
+				printf("cc %x\n",tmp1);
 				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
 			}
 			mps=0;
 			break;
 			
 		case 3: // Note On
-			tmp1 = inbuf;
+			tmp1 = inbuf; // key#
 			mps=4;
-			printf("noteon\n");
 			break;
 		case 4: // Note On velocity
 			if (inbuf==0) { // Note off
-				if (tmp1==note[0]) gate[0]=0;
-				if (tmp1==note[1]) gate[1]=0;
+				if (tmp1==note[0]) { gate[0]=0; printf("off:0\n"); }
+				if (tmp1==note[1]) { gate[1]=0; printf("off:1\n"); }
 			}
 			else {
-				if (gate[0]!=0) {
+				if (gate[0] != 0) {
 					note[1]=tmp1;
 					gate[1]=inbuf;
 				} else {
-					note[0]=tmp1;
-					gate[0]=inbuf;
+					note[0] = note[1] = tmp1;
+					gate[0] = gate[1] = inbuf;
 				}
+				printf("N0:%d G0:%d N1:%d G1:%d\n",note[0], gate[0], note[1], gate[1]);
 			}
 			mps=0;
 			break;
@@ -243,9 +241,9 @@ void clearPatches(void) {
 		
 	for (i=0 ; i<MAXMODS ; i++) {
 		for (ii=0 ; ii<MAXIN ; ii++)
-			patchIn[i][ii] = NOPATCHBUS-1;
+			patchIn[i][ii] = DUMP;
 		for (ii=0 ; ii<MAXOUT ; ii++)
-			patchOut[i][ii] = NOPATCHBUS-2;
+			patchOut[i][ii] = DUMP;
 		patchGate[i] = 2;
 		patchNote[i] = 2;
 	}
@@ -265,9 +263,10 @@ void mainOpenModular(void) {
 	
 	while(1) { // forever loop
 	
-/*		if( MIDIin(&mididata)==1 ) {
+		if( MIDIin(&mididata)==1 ) {
+			//printf("GOT MIDI DATA\n");
 			parse(mididata);
-		}*/
+		}
 		if(AudioFIFOfull()==0) {
 
 			// Toggle bus

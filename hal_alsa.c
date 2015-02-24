@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define MIDIDEVICE		"/dev/snd/midiC1D0"
+#define MIDIDEVICE		"/dev/snd/midiC2D0"
 
 int MIDIin_d;
 int MIDIout_d;
@@ -32,9 +32,9 @@ snd_output_t *output = NULL;
 snd_pcm_sframes_t frames;
 snd_pcm_t *handle;
 
-int16_t buffer[16*1024]; /* some random data */
-int16_t audiobuffer1[64*1024]; 
-int16_t audiobuffer2[64*1024]; 
+//int16_t buffer[16*1024]; /* some random data */
+int16_t audiobuffer1[512]; 
+int16_t audiobuffer2[512]; 
 volatile unsigned char activebuffer = 0;
 volatile unsigned char bufferfull = 0;
 snd_pcm_t *handle;
@@ -63,8 +63,8 @@ unsigned char MIDIrcv(void) {
 }
 
 int MIDIin(unsigned char *data) {
-	return 0;
-//	return read(MIDIin_d, data, 1 );
+//	return 0;
+	return read(MIDIin_d, data, 1 );
 }
 
 void MIDIout(unsigned char outbuf) {
@@ -81,7 +81,16 @@ int AudioFIFOfull(void) {
 	return 0;
 }
 void busspy(int bus) {
-	printf("%03d %03f ",bus,patchBus[bus][togglerOut]);
+	static int il;
+	static float lastval;
+	il++;
+	if (il==100) {
+		if (lastval!=patchBus[bus][togglerOut]) {
+			printf("%03d %03f \n",bus,patchBus[bus][togglerOut]);
+			lastval=patchBus[bus][togglerOut];
+		}
+		il=0;
+	}
 }
 
 void AudioInit(void) {
@@ -91,22 +100,19 @@ void AudioInit(void) {
 void AudioOut(void) {
 	static int samplecount = 0;
 	static int buffersamples = sizeof(audiobuffer1)/2;
-	/*static 
-	snd_pcm_sframes_t*/
-	long frames;
-
-		
+	snd_pcm_sframes_t frames;
+	//busspy(131);
 	switch (activebuffer) {
 		case 0x0:
-			audiobuffer1[samplecount]=(int16_t)(patchBus[0][togglerOut]*0x7FFF);
+			audiobuffer1[samplecount]=(int16_t)(patchBus[OUTL][togglerOut]*0x7FFF);
 			samplecount++;
-			audiobuffer1[samplecount]=(int16_t)(patchBus[1][togglerOut]*0x7FFF);
+			audiobuffer1[samplecount]=(int16_t)(patchBus[OUTR][togglerOut]*0x7FFF);
 			samplecount++;
 			break;
 		case 0xFF:
-			audiobuffer2[samplecount]=(int16_t)(patchBus[0][togglerOut]*0x7FFF);
+			audiobuffer2[samplecount]=(int16_t)(patchBus[OUTL][togglerOut]*0x7FFF);
 			samplecount++;
-			audiobuffer2[samplecount]=(int16_t)(patchBus[1][togglerOut]*0x7FFF);
+			audiobuffer2[samplecount]=(int16_t)(patchBus[OUTR][togglerOut]*0x7FFF);
 			samplecount++;
 			break;
 		default:
@@ -116,17 +122,13 @@ void AudioOut(void) {
 	}
 	if (samplecount == buffersamples) {
 		samplecount=0;
-		printf("s\n");
 		if (activebuffer==0) {
 			while ( frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4) == EAGAIN)
-				printf("pending\n");
-			if (frames<0) printf("error\n");
-			printf("0\n");
+				;
 		}
 		else {
 			while ( (frames = snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4)) == EAGAIN)
 				;
-			printf("ff\n");
 		}
 		activebuffer = ~activebuffer;
 	}

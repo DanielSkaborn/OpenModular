@@ -10,14 +10,50 @@
 #define MAXIN		16
 #define MAXOUT		16
 #define NOPATCHBUS 256
-/*
-#define MAXCTRLIN	16
-#define MAXCTRLOUT	16
-#define MAXAUDIIN	4
-#define MAXAUDIOUT	4
-#define NOCTRLPATCHBUS 256
-#define NOAUDIOPATCHBUS 128
-*/
+
+// To simplify and ease reading, define som macros of the signals this module use
+
+#define AIN0	patchBus[patchIn[id][0]][togglerIn]
+#define AIN1	patchBus[patchIn[id][1]][togglerIn]
+#define AIN2	patchBus[patchIn[id][2]][togglerIn]
+#define AIN3	patchBus[patchIn[id][3]][togglerIn]
+#define AIN4	patchBus[patchIn[id][4]][togglerIn]
+#define AIN5	patchBus[patchIn[id][5]][togglerIn]
+#define AIN6	patchBus[patchIn[id][6]][togglerIn]
+#define AIN7	patchBus[patchIn[id][7]][togglerIn]
+#define AIN8	patchBus[patchIn[id][8]][togglerIn]
+#define AIN9	patchBus[patchIn[id][9]][togglerIn]
+#define AIN10	patchBus[patchIn[id][10]][togglerIn]
+#define AIN11	patchBus[patchIn[id][11]][togglerIn]
+#define AIN12	patchBus[patchIn[id][12]][togglerIn]
+#define AIN13	patchBus[patchIn[id][13]][togglerIn]
+#define AIN14	patchBus[patchIn[id][14]][togglerIn]
+#define AIN15	patchBus[patchIn[id][15]][togglerIn]
+
+#define AOUT0	patchBus[patchOut[id][0]][togglerOut]
+#define AOUT1	patchBus[patchOut[id][1]][togglerOut]
+#define AOUT2	patchBus[patchOut[id][2]][togglerOut]
+#define AOUT3	patchBus[patchOut[id][3]][togglerOut]
+#define AOUT4	patchBus[patchOut[id][4]][togglerOut]
+#define AOUT5	patchBus[patchOut[id][5]][togglerOut]
+#define AOUT6	patchBus[patchOut[id][6]][togglerOut]
+#define AOUT7	patchBus[patchOut[id][7]][togglerOut]
+#define AOUT8	patchBus[patchOut[id][8]][togglerOut]
+#define AOUT9	patchBus[patchOut[id][9]][togglerOut]
+#define AOUT10	patchBus[patchOut[id][10]][togglerOut]
+#define AOUT11	patchBus[patchOut[id][11]][togglerOut]
+#define AOUT12	patchBus[patchOut[id][12]][togglerOut]
+#define AOUT13	patchBus[patchOut[id][13]][togglerOut]
+#define AOUT14	patchBus[patchOut[id][14]][togglerOut]
+#define AOUT15	patchBus[patchOut[id][15]][togglerOut]
+
+#define GATE	gate[patchGate[id]]
+#define NOTE	note[patchNote[id]]
+
+#define DUMP	NOPATCHBUS-1
+#define OUTL	NOPATCHBUS-2
+#define OUTR	NOPATCHBUS-3
+
 
 // These are the 'live' bus signals
 //volatile unsigned char	ctrlPatchBus[NOCTRLPATCHBUS];
