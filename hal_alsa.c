@@ -6,6 +6,7 @@
 // Daniel Skaborn
 
 #include "/usr/include/alsa/asoundlib.h"
+#include "/usr/include/alsa/pcm.h"
 #include <pthread.h>
 
 /*
@@ -32,8 +33,8 @@ snd_pcm_sframes_t frames;
 snd_pcm_t *handle;
 
 int16_t buffer[16*1024]; /* some random data */
-int16_t audiobuffer1[32*1024]; 
-int16_t audiobuffer2[32*1024]; 
+int16_t audiobuffer1[64*1024]; 
+int16_t audiobuffer2[64*1024]; 
 volatile unsigned char activebuffer = 0;
 volatile unsigned char bufferfull = 0;
 snd_pcm_t *handle;
@@ -115,30 +116,22 @@ void AudioOut(void) {
 	if (samplecount == buffersamples) {
 		bufferfull=1;
 		samplecount=0;
-	}
-	return;
-}
-
-	
-
-void *audiotoggle_func(void) {
-	
-	while(1) {
-		
 		if (activebuffer==0) {
-			frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4);
+			while ( frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4) == EAGAIN)
+				printf("pending\n");
+			if (frames<0) printf("error\n");
 		}
 		else {
-			frames = snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4);
+			while ( (frames = snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4)) == EAGAIN)
+				;
+			printf(".\n");
 		}
 		bufferfull = 0;
 		activebuffer = ~activebuffer;
-	
-		while(snd_pcm_avail(handle)<2*4096)
-			usleep(0);
 	}
 	return;
 }
+
 
 int main(void)
 {
@@ -149,10 +142,8 @@ int main(void)
 
 	MIDIinit();
 
-	snd_pcm_open(&handle, ALSAdevice, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);//) < 0);
-	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 225000 );
-
-	pthread_create( &audiotoggle, NULL, audiotoggle_func, NULL);
+	snd_pcm_open(&handle, ALSAdevice, SND_PCM_STREAM_PLAYBACK, SND_PCM_STREAM_PLAYBACK);//) < 0);
+	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 100000 );
 
     mainOpenModular();
 
