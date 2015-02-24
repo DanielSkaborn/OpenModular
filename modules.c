@@ -752,18 +752,18 @@ void presetPatches(unsigned char prg) {
 // AIN0	 : PULSEWIDTH
 // AIN1  : FINETUNE
 		//osc1
-		patchOut[0][0]	= 20;
+		patchOut[0][0]	= 0;
 		patchOut[0][1]	= 10;
 		patchIn[0][0]	= 160;
 		patchIn[0][1]	= 131;
 		patchNote[0]	= 0;
 
 		//osc2
-		patchOut[7][0]	= 21; 
-		patchOut[7][1]	= 11;
-		patchIn[7][0]	= 140;//130;
-		patchIn[7][1]	= 130;
-		patchNote[7]	= 1;
+		patchOut[1][0]	= 1; 
+		patchOut[1][1]	= 11;
+		patchIn[1][0]	= 140;//130;
+		patchIn[1][1]	= 130;
+		patchNote[1]	= 1;
 		
 		setPB(130,0.3);
 		setPB(131,0);
@@ -818,17 +818,18 @@ void presetPatches(unsigned char prg) {
 // This function is called by the OpenModular
 void moduleRegistration(void) {
 	regModule_Oscilator1(0);
-	regModule_Sequencer(1);
-	regModule_Smoothie(2);
+	regModule_Oscilator2(1);
+	regModule_Sequencer(2);
+/*	regModule_Smoothie(2);
 	regModule_SampleAndHold(3);
 	regModule_ADSR(4);
 	regModule_Gain(5);
 	regModule_Filter1(6);
-	regModule_Oscilator2(7);
+	
 	regModule_Filter2(8);
 	regModule_LFO(9);
 	regModule_LFO2(10);
-	
+	*/
 //	regModule_Gain(0);
 //	regModule_ADSR(1);
 //	
@@ -838,7 +839,7 @@ void moduleRegistration(void) {
 //	regModule_SampleAndHold(7);
 //	regModule_Sequencer(8);
 
-	numberOfModules=11;
+	numberOfModules=3;
 
 	return;
 }

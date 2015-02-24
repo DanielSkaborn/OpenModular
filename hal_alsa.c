@@ -78,7 +78,7 @@ void MIDIout(unsigned char outbuf) {
 }
 
 int AudioFIFOfull(void) {
-	return bufferfull;
+	return 0;
 }
 void busspy(int bus) {
 	printf("%03d %03f ",bus,patchBus[bus][togglerOut]);
@@ -90,9 +90,10 @@ void AudioInit(void) {
 
 void AudioOut(void) {
 	static int samplecount = 0;
-	static int buffersamples = sizeof(audiobuffer1)/4;
-	static 
-	snd_pcm_sframes_t frames;
+	static int buffersamples = sizeof(audiobuffer1)/2;
+	/*static 
+	snd_pcm_sframes_t*/
+	long frames;
 
 		
 	switch (activebuffer) {
@@ -114,19 +115,19 @@ void AudioOut(void) {
 			break;
 	}
 	if (samplecount == buffersamples) {
-		bufferfull=1;
 		samplecount=0;
+		printf("s\n");
 		if (activebuffer==0) {
 			while ( frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4) == EAGAIN)
 				printf("pending\n");
 			if (frames<0) printf("error\n");
+			printf("0\n");
 		}
 		else {
 			while ( (frames = snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4)) == EAGAIN)
 				;
-			printf(".\n");
+			printf("ff\n");
 		}
-		bufferfull = 0;
 		activebuffer = ~activebuffer;
 	}
 	return;
