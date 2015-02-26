@@ -123,7 +123,7 @@ void parse(unsigned char inbuf){
 					note[0] = note[1] = tmp1;
 					gate[0] = gate[1] = inbuf;
 				}
-				printf("N0:%d G0:%d N1:%d G1:%d\n",note[0], gate[0], note[1], gate[1]);
+//				printf("N0:%d G0:%d N1:%d G1:%d\n",note[0], gate[0], note[1], gate[1]);
 			}
 			mps=0;
 			break;
@@ -268,9 +268,8 @@ void mainOpenModular(void) {
 		}
 	}
 	
-	
 	editor();
-	
+	printf("Enter OpenModular audio process loop\n");
 	while(1) { // forever loop
 		if( MIDIin(&mididata)==1 ) {
 			parse(mididata);

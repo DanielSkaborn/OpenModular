@@ -11,11 +11,6 @@
 #define e		2.718281828459045
 
 
-
-float notetofreqLUT(unsigned char theNote) {
-	
-}
-
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
 	
@@ -31,16 +26,8 @@ void copymodstrings(int id, char* name, char* inNames, char* outNames){
 
 // an amplifier and peak follower
 void module_Gain(int id) { 
-	volatile static char peak=0;
-	volatile char newpeak=0;
-	
 	AOUT0 = AIN0 * AIN3;
 	AOUT1 = AIN1 * AIN3;
-	
-/*	newpeak=(unsigned char)(AOUT0*127);
-	if (peak<newpeak)
-		AOUT3 = newpeak;
-*/		
 	return;
 }
 void regModule_Gain(int id) {
@@ -621,7 +608,7 @@ void module_Oscilator1(int id) {
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-	volatile int i=0;
+//	volatile int i=0;
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
@@ -680,7 +667,7 @@ void module_Oscilator2(int id) {
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-	volatile int i=0;
+//	volatile int i=0;
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;

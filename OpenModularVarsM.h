@@ -67,12 +67,6 @@ volatile int			togglerIn, togglerOut;
 // These defines the patch of the modular
 volatile int	patchIn[MAXMODS][MAXIN];
 volatile int	patchOut[MAXMODS][MAXOUT];
-/*
-volatile int	patchCtrlIn[MAXMODS][MAXCTRLIN];
-volatile int	patchCtrlOut[MAXMODS][MAXCTRLOUT];
-volatile int	patchAudioIn[MAXMODS][MAXAUDIIN];
-volatile int	patchAudioOut[MAXMODS][MAXAUDIOUT];
-*/
 volatile int	patchGate[MAXMODS];
 volatile int	patchNote[MAXMODS];
 

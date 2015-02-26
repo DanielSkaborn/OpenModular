@@ -17,7 +17,7 @@
 #define SAMPLERATEF		44100.0f
 
 #define MIDIDEVICE		"/dev/snd/midiC2D0"
-static char *ALSAdevice = "plughw:1,0";
+#define ALSADEVICE      "plughw:1,0"
 
 int MIDIin_d;
 int MIDIout_d;
@@ -27,10 +27,9 @@ pthread_t patchconnector;
 	
 snd_output_t *output = NULL;
 snd_pcm_sframes_t frames;
-snd_pcm_t *handle;
 
-int16_t audiobuffer1[1024]; 
-int16_t audiobuffer2[1024]; 
+int16_t audiobuffer1[512]; 
+int16_t audiobuffer2[512]; 
 volatile unsigned char activebuffer = 0;
 volatile unsigned char bufferfull = 0;
 snd_pcm_t *handle;
@@ -42,8 +41,6 @@ int MIDIin(unsigned char *data) {
 }
 
 void MIDIout(unsigned char outbuf) {
-	unsigned char temp;
-	
 	write(MIDIout_d, &outbuf, 1);
 	return;
 }
@@ -65,7 +62,7 @@ void busspy(int bus) {
 }
 
 void AudioOut(void) {
-	return;/*
+	
 	static int samplecount = 0;
 	static int buffersamples = sizeof(audiobuffer1)/2;
 	snd_pcm_sframes_t frames;
@@ -90,44 +87,45 @@ void AudioOut(void) {
 	if (samplecount == buffersamples) {
 		samplecount=0;
 		if (activebuffer==0) {
-			while ( frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4) == EAGAIN)
+			while ( (frames = snd_pcm_writei(handle, audiobuffer1, sizeof(audiobuffer1)/4)) == EAGAIN)
 				;
 		}
 		else {
-			while ( (frames = snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4)) == EAGAIN)
+			while ( (frames = (snd_pcm_writei(handle, audiobuffer2, sizeof(audiobuffer2)/4))) == EAGAIN)
 				;
 		}
 		activebuffer = ~activebuffer;
 	}
 	return;
-	*/
 }
 
 
 int main(void)
 {
-	int err;
-	unsigned int i;
-	snd_pcm_sframes_t frames;
 	int flags;
 
 	printf("ALSA Hardware abstration layer\n  MIDI:  ");
-	printf(MIDIDEVICE);printf("\n  Audio: %s\n",ALSAdevice);
+	printf(MIDIDEVICE);
+	printf("\n  Audio: ");
+	printf(ALSADEVICE);
+	printf("\n");
 
 	// Init MIDI interface
  	MIDIin_d  = open(MIDIDEVICE,O_RDONLY);
 	MIDIout_d = open(MIDIDEVICE,O_WRONLY);
-
+	if (MIDIin_d==-1) { printf("could not open MIDI in %s\n", MIDIDEVICE); exit(0); }
+	if (MIDIout_d==-1) { printf("could not open MIDI out %s\n", MIDIDEVICE); exit(0); }
+	
 	flags = fcntl(MIDIin_d, F_GETFL, 0);
 	fcntl(MIDIin_d, F_SETFL, flags | O_NONBLOCK);
 
     // Init ALSA sound device
- 	snd_pcm_open(&handle, ALSAdevice, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+
+ 	if ( snd_pcm_open(&handle, ALSADEVICE, SND_PCM_STREAM_PLAYBACK, 0)<0 ) {
+		exit(0);
+	}
 	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 100000 );
 
-	//printf("Start mainOpenModular\n");
-	
-	while(1);
 	mainOpenModular();
 
 	snd_pcm_close(handle);
@@ -135,6 +133,7 @@ int main(void)
 }
 
 void editor(void) {
-	pthread_create(&patchconnector, NULL, connect, NULL);
+	pthread_create(&patchconnector, NULL, patchtexteditor, NULL);
 	return;
 }
+
