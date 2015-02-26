@@ -59,6 +59,28 @@ void regModule_Gain(int id) {
 	return;
 }
 
+// Output module
+void module_Output(int id) { 
+	patchBus[OUTL][togglerOut] = AIN0 ;
+	patchBus[OUTR][togglerOut] = AIN1 ;
+	return;
+}
+void regModule_Output(int id) {
+	moduleRegistry[id] = module_Output;
+	
+//                               "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]    = "L   R                                                           \0"; 	
+	char outNames[4*MAXOUT+1]  = "                                                                \0";
+//               "        \0";
+	char name[9]="OUTPUT  \0";
+	
+	modIns[id]      = 2;
+	modOuts[id]     = 0;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
+
 void module_ADSR(int id) {
 	// CIN0  : Atack
 	// CIN1  : Decay
@@ -322,7 +344,7 @@ void module_Smoothie(int id) {
 void regModule_Smoothie(int id) {
 	moduleRegistry[id] = module_Smoothie;
 //                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 IN4 IN5 IN6 IN7 IN8 IN9 SMOO                    \0";
+	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 IN4 IN5 IN6 IN7 IN8 IN9 SMTH                    \0";
 	char outNames[4*MAXOUT+1] = "OUT0OUT1OUT2OUT3OUT4OUT5OUT6OUT7OUT8OUT9                        \0";
 //               "        \0";
 	char name[9]="SMOOTHIE\0";
@@ -780,17 +802,11 @@ void moduleRegistration(void) {
 	regModule_Filter2(7);
 	regModule_LFO(8);
 	regModule_LFO2(9);
-	
-//	regModule_Gain(0);
-//	regModule_ADSR(1);
-//	
-//	regModule_Filter1(4);
-//	regModule_Filter2(5);
-//	regModule_LFO(6);
-//	regModule_SampleAndHold(7);
+	regModule_Output(10);
+
 //	regModule_Sequencer(8);
 
-	numberOfModules=10;
+	numberOfModules=11;
 
 	return;
 }

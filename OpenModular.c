@@ -249,26 +249,33 @@ void clearPatches(void) {
 	}
 	return;
 }
-	
+
 void mainOpenModular(void) {	
-	int i;
+	int i, ii;
+	int n=120;
 	unsigned char mididata;
 	makeNoteToFreqLUT(0);
-	moduleRegistration();
+
 	clearPatches();
 	clearBusses();
-	presetPatches(0);
-
-	sendModulesInfo();
+	
+	moduleRegistration();
+		
+	for (i=0;i<numberOfModules;i++) {
+		for(ii=0;ii<modOuts[i];ii++) {
+			patchOut[i][ii]=n;
+			n++;
+		}
+	}
+	
+	
+	editor();
 	
 	while(1) { // forever loop
-	
 		if( MIDIin(&mididata)==1 ) {
-			//printf("GOT MIDI DATA\n");
 			parse(mididata);
 		}
 		if(AudioFIFOfull()==0) {
-
 			// Toggle bus
 			togglerIn=togglerOut;
 			if (togglerIn) togglerOut=0;
