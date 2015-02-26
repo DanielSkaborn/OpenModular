@@ -3,22 +3,21 @@ void printConnectsTo(int bus);
 void printModOuts(void);
 void printModIns(int id);
 void printMods(void);
-void *connect(void *arg);
+void *patchtexteditor(void *arg);
 
 void printModOuts(void) {
 	int i, ii, iii;
 	
-	printf("\n\n ID module   OUT  BUS %d\n",numberOfModules);
-	printf(" ====================\n");
+	printf("\n\n BUS ID module   OUT   > CONNECTED TO\n");
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
+			printf(" %02d ",patchOut[i][ii]); // patchnumber
 			printf(" %02d ",i); // id
 			for(iii=0;iii<9;iii++)
 				putchar(modName[i][iii]);
 			putchar(' ');
 			for(iii=0;iii<4;iii++)
 				putchar(modOutsName[i][ii*4+iii]);
-			printf(" %d ",patchOut[i][ii]);
 			printConnectsTo(patchOut[i][ii]);
 			printf("\n");
 		}

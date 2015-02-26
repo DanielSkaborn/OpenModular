@@ -100,7 +100,7 @@ void parse(unsigned char inbuf){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-				printf("cc %x\n",tmp1);
+//				printf("cc %x\n",tmp1);
 				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
 			}
 			mps=0;
@@ -112,8 +112,8 @@ void parse(unsigned char inbuf){
 			break;
 		case 4: // Note On velocity
 			if (inbuf==0) { // Note off
-				if (tmp1==note[0]) { gate[0]=0; printf("off:0\n"); }
-				if (tmp1==note[1]) { gate[1]=0; printf("off:1\n"); }
+				if (tmp1==note[0]) { gate[0]=0; }
+				if (tmp1==note[1]) { gate[1]=0; }
 			}
 			else {
 				if (gate[0] != 0) {
