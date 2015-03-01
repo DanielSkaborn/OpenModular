@@ -25,7 +25,7 @@ void mainOpenModular(void);
 
 void sendModulesInfo(void) {
 	int id,i;
-	
+
 	MIDIout( 0xF0 );			// SysEx
 	MIDIout( OPMODMFG1 );
 	MIDIout( OPMODMFG2 );
@@ -50,7 +50,7 @@ void sendModulesInfo(void) {
 void sendPatchDump(void) {
 	int id, i;
 	unsigned char temp;
-	
+
 	MIDIout( 0xF0 );				// SysEx
 	MIDIout( OPMODMFG1 );
 	MIDIout( OPMODMFG2 );
@@ -90,7 +90,7 @@ void parse(unsigned char inbuf){
 			if (inbuf == (0xE0+CHANNEL)) mps=8; // pitchbend
 			if (inbuf == (0xF0)) mps=10; // sysex
 			break;
-			
+
 		case 1: // CC #
 			tmp1 = inbuf;
 			mps=2;
@@ -100,12 +100,12 @@ void parse(unsigned char inbuf){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-//				printf("cc %x\n",tmp1);
+//				printf("cc %d\n",tmp1);
 				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
 			}
 			mps=0;
 			break;
-			
+
 		case 3: // Note On
 			tmp1 = inbuf; // key#
 			mps=4;
@@ -127,7 +127,7 @@ void parse(unsigned char inbuf){
 			}
 			mps=0;
 			break;
-			
+
 		case 5: // Notes off
 			tmp1 = inbuf;
 			mps=6;
@@ -137,12 +137,12 @@ void parse(unsigned char inbuf){
 			if (tmp1==note[1]) gate[1]=0;
 			mps=0;
 			break;
-			
+
 		case 7: // Program change
 			//preset_program = inbuf;
 			mps=0;
 			break;
-		
+
 		case 8: // Pitchbend
 			tmp1= inbuf;
 			mps=9;
@@ -152,16 +152,16 @@ void parse(unsigned char inbuf){
 			pitchBend = (float)(pitchBendRaw-16382) / 16382.0;
 			mps=0;
 			break;
-			
+
 		case 10: // Sys-ex
 			if (inbuf == OPMODMFG1) mps=11;
 			else mps=0;
 			break;
-		case 11: 
+		case 11:
 			if (inbuf == OPMODMFG2) mps=12;
 			else mps=0;
 			break;
-		case 12: 
+		case 12:
 			if (inbuf == OPMODMFG3) mps=13;
 			else mps=0;
 			break;
@@ -173,7 +173,7 @@ void parse(unsigned char inbuf){
 			if (inbuf == 0x04) mps=23; // Set CtrlPatchOut
 			if (inbuf == 0x05) mps=26; // Request Patch Dump
 			if (inbuf == 0x06) mps=27; // Request Modules Information
-			
+
 			break;
 		case 14: // Set PatchIn
 			tmp1=inbuf; // moduleID
@@ -203,12 +203,12 @@ void parse(unsigned char inbuf){
 			if (inbuf==0xF7) sendPatchDump();
 			mps=0;
 			break;
-			
+
 		case 27: // // Request Modules Information
 			if (inbuf==0xF7) sendModulesInfo();
 			mps=0;
 			break;
-			
+
 		default:
 			mps=0;
 	}
@@ -217,11 +217,10 @@ void parse(unsigned char inbuf){
 
 void clearBusses(void) {
 	int i;
-	
 	for (i=0 ; i<NOPATCHBUS ; i++) {
 		patchBus[i][0]=patchBus[i][1]=0;
 	}
-		
+
 	note[0] = 1;
 	note[1] = 1;
 	note[2] = 1;
@@ -230,7 +229,6 @@ void clearBusses(void) {
 	gate[2] = 0;
 	pitchBend = 0.0;
 	pitchBendRaw = 0;
-	
 	togglerIn=0;
 	togglerOut=1;
 	return;
@@ -238,7 +236,7 @@ void clearBusses(void) {
 
 void clearPatches(void) {
 	int i,ii;
-		
+
 	for (i=0 ; i<MAXMODS ; i++) {
 		for (ii=0 ; ii<MAXIN ; ii++)
 			patchIn[i][ii] = DUMP;
@@ -248,7 +246,7 @@ void clearPatches(void) {
 	return;
 }
 
-void mainOpenModular(void) {	
+void mainOpenModular(void) {
 	int i, ii;
 	int n=120;
 	unsigned char mididata;
@@ -266,7 +264,7 @@ void mainOpenModular(void) {
 		}
 	}
 	presetPatches(0);
-	
+
 	editor();
 	printf("Enter OpenModular audio process loop\n");
 	while(1) { // forever loop
@@ -277,7 +275,7 @@ void mainOpenModular(void) {
 			// Toggle bus
 			togglerIn=togglerOut;
 			if (togglerIn) togglerOut=0;
-			
+
 			// Execute one sampletick from all modules
 			for (i=0;i<numberOfModules;i++) { 
 				moduleRegistry[i](i);

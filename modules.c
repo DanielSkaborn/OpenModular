@@ -14,7 +14,7 @@
 
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
-	
+
 	for (i=0;i<4*MAXIN+1;i++)
 		modInsName[id][i] = inNames[i];
 	for (i=0;i<4*MAXOUT+1;i++)
@@ -35,16 +35,16 @@ void module_Gain(int id) {
 }
 void regModule_Gain(int id) {
 	moduleRegistry[id] = module_Gain;
-	
+
 //                               "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]    = "X1  Y1  X2  Y2  X3  Y3  X4  Y4                                  \0"; 	
 	char outNames[4*MAXOUT+1]  = "Z1  Z2  Z3  Z4  SUMZ                                            \0";
 //               "        \0";
 	char name[9]="MULTIPLY\0";
-	
+
 	modIns[id]      = 8;
 	modOuts[id]     = 5;
-	
+
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
@@ -57,16 +57,16 @@ void module_Output(int id) {
 }
 void regModule_Output(int id) {
 	moduleRegistry[id] = module_Output;
-	
+
 //                               "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]    = "L   R                                                           \0"; 	
 	char outNames[4*MAXOUT+1]  = "                                                                \0";
 //               "        \0";
 	char name[9]="OUTPUT  \0";
-	
+
 	modIns[id]      = 2;
 	modOuts[id]     = 0;
-	
+
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
@@ -78,7 +78,7 @@ void module_ADSR(int id) {
 	// CIN3  : Release
 	// COUT0 : ADSRcontrol
 	// GATE  : Trig on gate #
-	
+
 	volatile static int state=0;
 	volatile static unsigned char lastgate=0;
 	volatile static float d=0, signal=0, sustain=0;
@@ -90,7 +90,7 @@ void module_ADSR(int id) {
 	if ((lastgate!=0) && (GATE==0)) {
 		state=6; // Release
 	}
-	
+
 	switch (state) {
 		case 0: // Idle
 			signal = 0.0f;
@@ -146,10 +146,10 @@ void regModule_ADSR(int id) {
 	char outNames[4*MAXOUT+1] = "ADSR                                                            \0";
 //               "        \0";
 	char name[9]="ADSR    \0";
-	
+
 	modIns[id]     = 4;
 	modOuts[id]    = 1;
-	
+
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
@@ -160,17 +160,22 @@ void module_Gate2Bus(int id) {
 	AOUT2 = (float)(gate[0]) / 128.0;
 	AOUT3 = (float)(gate[1]) / 128.0;
 
-	if (AOUT2 > temp1) temp1 = AOUT2;
-	if (AOUT3 > temp2) temp2 = AOUT3;
+	if (AOUT2 > temp1) temp1 += 0.1;
+	if (AOUT3 > temp2) temp2 += 0.1;
+
+	if ((AOUT2!=0.0) && (temp1 > AOUT2)) temp1 = AOUT2;
+	if ((AOUT3!=0.0) && (temp2 > AOUT3)) temp2 = AOUT3;
+
 	rel = (AIN2+1.0)/2.0;
 	rel/=10000.0;
 	if (rel < 0.0001) rel=0.0001;
-	
+
 	temp1 = temp1 - 0.0001;
 	temp2 = temp2 -0.0001;
+
 	if (temp1 < 0.0) temp1 = 0.0;
 	if (temp2 < 0.0) temp2 = 0.0;
-	
+
 	AOUT0 = temp1 * AIN0;
 	AOUT1 = temp2 * AIN1;
 	return;
@@ -184,10 +189,10 @@ void regModule_Gate2Bus(int id) {
 	char outNames[4*MAXOUT+1] = "GA1 GA2 G1  G2                                                  \0";
 //               "        \0";
 	char name[9]="GATE2BUS\0";
-	
+
 	modIns[id]     = 3;
 	modOuts[id]    = 4;
-	
+
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }

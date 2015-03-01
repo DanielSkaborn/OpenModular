@@ -124,7 +124,7 @@ int main(void)
  	if ( snd_pcm_open(&handle, ALSADEVICE, SND_PCM_STREAM_PLAYBACK, 0)<0 ) {
 		exit(0);
 	}
-	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 100000 );
+	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 20000 );
 
 	mainOpenModular();
 
