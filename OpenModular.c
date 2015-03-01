@@ -242,8 +242,6 @@ void clearPatches(void) {
 	for (i=0 ; i<MAXMODS ; i++) {
 		for (ii=0 ; ii<MAXIN ; ii++)
 			patchIn[i][ii] = DUMP;
-		for (ii=0 ; ii<MAXOUT ; ii++)
-			patchOut[i][ii] = DUMP;
 		patchGate[i] = 2;
 		patchNote[i] = 2;
 	}
@@ -267,6 +265,7 @@ void mainOpenModular(void) {
 			n++;
 		}
 	}
+	presetPatches(0);
 	
 	editor();
 	printf("Enter OpenModular audio process loop\n");

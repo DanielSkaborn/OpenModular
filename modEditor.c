@@ -5,10 +5,25 @@ void printModIns(int id);
 void printMods(void);
 void *patchtexteditor(void *arg);
 
+void clearPatches(void);
+
 void printModOuts(void) {
-	int i, ii, iii;
+	int i, ii, iii, id;
+	int temp;
 	
-	printf("\n\n BUS ID module   OUT   > CONNECTED TO\n");
+	for (i=0;i<120;i++) {
+		temp=0;
+		for (id=0;id<numberOfModules;id++)
+			for (ii=0;ii<modIns[id];ii++)
+				if (patchIn[id][ii]==i) 
+					temp=1;
+			if (temp==1) {
+				printf("\n %03d MIDI CC          ",i);
+				printConnectsTo(i);
+			}
+	}
+	printf("\n\n");
+	//printf("\n\n BUS ID module   OUT   > CONNECTED TO\n");
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
 			printf(" %02d ",patchOut[i][ii]); // patchnumber
@@ -22,6 +37,7 @@ void printModOuts(void) {
 			printf("\n");
 		}
 	}
+	printf("\n 998 Clear\n 999 Save\n1000 Note\n1001 Gate\n");
 }
 
 void printConnectsTo(int bus) {
@@ -65,6 +81,17 @@ void printMods(void) {
 	return;
 }
 
+void savePatch(void) {
+	int id, in;
+	
+	for(id=0;id<numberOfModules;id++) {
+		for (in=0;in<modIns[id];in++)
+			printf("patchIn[%d][%d] = %d; ", id, in, patchIn[id][in]);
+		printf("patchNote[%d] = %d; ", id, patchNote[id]);
+		printf("patchGate[%d] = %d; ", id, patchGate[id]);
+	}
+}
+
 void *patchtexteditor(void *arg) {
 	int p, id, in;
 
@@ -75,7 +102,8 @@ void *patchtexteditor(void *arg) {
 		
 		printf("\nPB> ");
 		scanf("%d",&p);
-	
+		if (p == 998) clearPatches();
+		if (p == 999) savePatch();
 		if ( p > 999 ) {
 			if (p==1000) {
 				printMods();

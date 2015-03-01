@@ -10,6 +10,7 @@
 
 #define e		2.718281828459045
 
+//float cosLut50[] = {1, 0.9921147013, 0.9685831611, 0.9297764859, 0.87630668, 0.8090169944, 0.7289686274, 0.6374239897, 0.535826795, 0.4257792916, 0.3090169944, 0.1873813146, 0.0627905195, -0.0627905195, -0.1873813146, -0.3090169944, -0.4257792916, -0.535826795, -0.6374239897, -0.7289686274, -0.8090169944, -0.87630668, -0.9297764859, -0.9685831611, -0.9921147013, -1, -0.9921147013, -0.9685831611, -0.9297764859, -0.87630668, -0.8090169944, -0.7289686274, -0.6374239897, -0.535826795, -0.4257792916, -0.3090169944, -0.1873813146, -0.0627905195, 0.0627905195, 0.1873813146, 0.3090169944, 0.4257792916, 0.535826795, 0.6374239897, 0.7289686274, 0.8090169944, 0.87630668, 0.9297764859, 0.9685831611, 0.9921147013, 1};
 
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
@@ -24,23 +25,25 @@ void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	return;
 }
 
-// an amplifier and peak follower
 void module_Gain(int id) { 
-	AOUT0 = AIN0 * AIN3;
-	AOUT1 = AIN1 * AIN3;
+	AOUT0 = AIN0 * AIN1;
+	AOUT1 = AIN2 * AIN3;
+	AOUT2 = AIN4 * AIN5;
+	AOUT3 = AIN6 * AIN7;
+	AOUT4 = (AOUT0 + AOUT1 + AOUT2 + AOUT3)/4.0;
 	return;
 }
 void regModule_Gain(int id) {
 	moduleRegistry[id] = module_Gain;
 	
 //                               "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]    = "IN1 IN2 GAIN                                                    \0"; 	
-	char outNames[4*MAXOUT+1]  = "OUT1OUT2                                                        \0";
+	char inNames[4*MAXIN+1]    = "X1  Y1  X2  Y2  X3  Y3  X4  Y4                                  \0"; 	
+	char outNames[4*MAXOUT+1]  = "Z1  Z2  Z3  Z4  SUMZ                                            \0";
 //               "        \0";
-	char name[9]="GAIN    \0";
+	char name[9]="MULTIPLY\0";
 	
-	modIns[id]      = 3;
-	modOuts[id]     = 2;
+	modIns[id]      = 8;
+	modOuts[id]     = 5;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
@@ -138,7 +141,7 @@ void module_ADSR(int id) {
 void regModule_ADSR(int id) {
 	moduleRegistry[id] = module_ADSR;
 
-//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL                                                 \0";
 	char outNames[4*MAXOUT+1] = "ADSR                                                            \0";
 //               "        \0";
@@ -150,7 +153,44 @@ void regModule_ADSR(int id) {
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
+void module_Gate2Bus(int id) { 
+	static float temp1=0;
+	static float temp2=0;
+	float rel;
+	AOUT2 = (float)(gate[0]) / 128.0;
+	AOUT3 = (float)(gate[1]) / 128.0;
 
+	if (AOUT2 > temp1) temp1 = AOUT2;
+	if (AOUT3 > temp2) temp2 = AOUT3;
+	rel = (AIN2+1.0)/2.0;
+	rel/=10000.0;
+	if (rel < 0.0001) rel=0.0001;
+	
+	temp1 = temp1 - 0.0001;
+	temp2 = temp2 -0.0001;
+	if (temp1 < 0.0) temp1 = 0.0;
+	if (temp2 < 0.0) temp2 = 0.0;
+	
+	AOUT0 = temp1 * AIN0;
+	AOUT1 = temp2 * AIN1;
+	return;
+}
+
+void regModule_Gate2Bus(int id) {
+	moduleRegistry[id] = module_Gate2Bus;
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "IN1 IN2 R                                                       \0";
+	char outNames[4*MAXOUT+1] = "GA1 GA2 G1  G2                                                  \0";
+//               "        \0";
+	char name[9]="GATE2BUS\0";
+	
+	modIns[id]     = 3;
+	modOuts[id]    = 4;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
 void module_LFO(int id) {
 	// CIN0	 : 1/rate
 	// CIN1  : max
@@ -248,7 +288,7 @@ void regModule_LFO2(int id) {
 	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
 	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
 //               "        \0";
-	char name[9]="LFOTRI  \0";
+	char name[9]="LFOTRI2 \0";
 	
 	modIns[id]     = 2;
 	modOuts[id]    = 1;
@@ -396,15 +436,15 @@ void module_Sequencer(int id) {
 			case 0:
 				note[0]=42;
 				gate[1]=200;
-				note[1]=47;
+//				note[1]=47;
 				break;
 			case 1:
 				note[0]=49;
-				note[1]=49;
+//				note[1]=49;
 				break;
 			case 2:
 				note[0]=47;
-				note[1]=42;
+//				note[1]=42;
 				break;
 			case 3:
 				note[0]=42;
@@ -415,7 +455,7 @@ void module_Sequencer(int id) {
 				break;
 			case 5:
 				note[0]=47;
-				note[1]=49;
+//				note[1]=49;
 				gate[1]=100;
 				break;
 			case 6:
@@ -608,7 +648,9 @@ void module_Oscilator1(int id) {
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-//	volatile int i=0;
+	int i;
+	static float temp=0;
+	float tempsq;
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
@@ -618,26 +660,31 @@ void module_Oscilator1(int id) {
 	}	
 		
 	// Apply finetune
-	freq = toneFreq + AIN1; // +/- 1Hz
+	freq = toneFreq + AIN1/2.0; // +/- 0.5Hz
 	
 	// generate a SAWUP
-	d = freq / SAMPLERATEF * 2.0;	// calculate d
+	d = freq / SAMPLERATEF /2.0;//*2 0;	// calculate d
+	pw = (AIN0 + 1.0)*0.45;
 	
-	AOUT0 += d;
-	if (AOUT0 > 1.0) {
-		AOUT0 -= 2.0;
-	}
+	tempsq=0;
 	
-	// generate a PULSEWAVE, using the SAWUP
-	pw = AIN0 * 0.95;
-	if (AOUT0 > pw)
-		AOUT1 = 1.0;
-	else
-		AOUT1 = -1.0;
-/*
-	AOUT0 = AOUT0 * (GATE/127.0);
-	AOUT1 = AOUT1 * (GATE/127.0);
-*/
+	// 4x oversampling
+	for (i=0;i<4;i++) {
+		// Generate SAWUP
+		temp += d;
+		if (temp > 1.0) 
+			temp -= 2.0;
+
+		// Generate SQUARE-PW
+		if (temp > pw)
+			tempsq+=0.25;
+		else
+			tempsq-=0.25;
+	 }
+
+	AOUT0 = temp;
+	AOUT1 = tempsq;
+
 	return;
 }
 void regModule_Oscilator1(int id) {
@@ -657,7 +704,7 @@ void regModule_Oscilator1(int id) {
 }
 
 void module_Oscilator2(int id) {
-	// AOUT0 : SAWUP
+// AOUT0 : SAWUP
 	// AOUT1 : SQUARE PWM
 	// AIN0	 : PULSEWIDTH
 	// AIN1  : FINETUNE
@@ -667,7 +714,9 @@ void module_Oscilator2(int id) {
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-//	volatile int i=0;
+	int i;
+	static float temp=0;
+	float tempsq;
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
@@ -677,26 +726,31 @@ void module_Oscilator2(int id) {
 	}	
 		
 	// Apply finetune
-	freq = toneFreq + AIN1*5.0; // +/- 5Hz
+	freq = toneFreq + AIN1/2.0; // +/- 0.5Hz
 	
 	// generate a SAWUP
-	d = freq / SAMPLERATEF * 2.0;	// calculate d
+	d = freq / SAMPLERATEF /2.0;//*2 0;	// calculate d
+	pw = (AIN0 + 1.0)*0.45;
 	
-	AOUT0 += d;
-	if (AOUT0 > 1.0) {
-		AOUT0 -= 2.0;
-	}
+	tempsq=0;
 	
-	// generate a PULSEWAVE, using the SAWUP
-	pw = AIN0 * 0.95;
-	if (AOUT0>pw)
-		AOUT1=1.0;
-	else
-		AOUT1=-1.0;
-/*		
-	AOUT0 = AOUT0 * (GATE/127.0);
-	AOUT1 = AOUT1 * (GATE/127.0);
-*/
+	// 4x oversampling
+	for (i=0;i<4;i++) {
+		// Generate SAWUP
+		temp += d;
+		if (temp > 1.0) 
+			temp -= 2.0;
+
+		// Generate SQUARE-PW
+		if (temp > pw)
+			tempsq+=0.25;
+		else
+			tempsq-=0.25;
+	 }
+
+	AOUT0 = temp;
+	AOUT1 = tempsq;
+
 	return;
 }
 void regModule_Oscilator2(int id) {
@@ -722,54 +776,19 @@ void setPB(int bus, float v) {
 }
 
 void presetPatches(unsigned char prg) {
-	if (prg==0) {
-
-		//osc1
-		patchIn[0][0]	= 0xa;  // PW
-		patchIn[0][1]	= 0x2;	// TUNE
-		patchOut[0][0]	= 199;	// SAW
-		patchOut[0][1]	= 200;	// SQR
-		patchNote[0]	= 0;
-		patchGate[0]	= 0;
-		
-		//osc2
-		patchIn[1][0]	= 0x5c; // PW
-		patchIn[1][1]	= 0x5f;	// TUNE
-		patchOut[1][0]	= 198; // SAW
-		patchOut[1][1]	= 201;	// SQR
-		patchNote[1]	= 1;
-		patchGate[1]	= 1;
-		
-		// filter1 6
-		patchIn[6][0]	= 200;  // signal in
-		patchIn[6][1]	= 0x10; // CF
-		patchIn[6][2]	= 0x11; // res
-		patchOut[6][0]	= OUTL;
-		patchOut[6][1]	= DUMP;
-		patchOut[6][2]	= DUMP;
-		
-		// filter2 7
-		patchIn[7][0]	= 198;  // signal in
-		patchIn[7][1]	= 0x12; // CF
-		patchIn[7][2]	= 0x13; // res
-		patchOut[7][0]	= OUTR;
-		patchOut[7][1]	= DUMP;
-		patchOut[7][2]	= DUMP;
-
-		//ADSR 4
-		patchIn[4][0]	= 0x49;	//A
-		patchIn[4][1]	= 0x9;	//D
-		patchIn[4][2]	= 0xc;	//S
-		patchIn[4][3]	= 0x48;	//R
-		patchOut[4][0]	= 131;	//ENV
-		patchGate[4]	= 0;
-
-		//GAIN 5
-		patchIn[5][0]	= 200;	// SIGNAL1
-		patchIn[5][1]	= 201;	// SIGNAL2
-		patchIn[5][2]	= 131;	// GAIN
-		patchOut[5][0]	= DUMP;
-		patchOut[5][1]	= DUMP;
+	switch (prg) {
+		case 0: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 138; patchIn[11][1] = 141; patchNote[11] = 2; patchGate[11] = 2; patchNote[12] = 2; patchGate[12] = 2;
+			break;
+		case 1: patchIn[0][0] = 134; patchIn[0][1] = 125; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 144; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 123; patchIn[2][1] = 134; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 122; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 0; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 120; patchIn[6][2] = 10; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 124; patchIn[7][2] = 10; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 138; patchIn[10][1] = 142; patchNote[10] = 2; patchGate[10] = 2;
+			break;
+		case 2: patchIn[0][0] = 134; patchIn[0][1] = 125; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 144; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 123; patchIn[2][1] = 134; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 122; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 0; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 120; patchIn[6][2] = 10; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 124; patchIn[7][2] = 10; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 138; patchIn[10][1] = 142; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 146; patchIn[11][1] = 147; patchNote[11] = 2; patchGate[11] = 2; 
+			break;
+		case 3:	patchIn[0][0] = 255; patchIn[0][1] = 255; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 255; patchIn[2][1] = 255; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 255; patchIn[3][1] = 255; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 146; patchIn[6][1] = 10; patchIn[6][2] = 255; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 147; patchIn[7][1] = 10; patchIn[7][2] = 255; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 120; patchIn[10][1] = 122; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 138; patchIn[11][1] = 141; patchNote[11] = 2; patchGate[11] = 2; 
+			break;
+		case 4: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 120; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 146; patchIn[11][1] = 147; patchNote[11] = 2; patchGate[11] = 2; 
+			break;
+		default:
+			break;
 	}
 	
 	return;
@@ -789,11 +808,11 @@ void moduleRegistration(void) {
 	regModule_Filter2(7);
 	regModule_LFO(8);
 	regModule_LFO2(9);
-	regModule_Output(10);
+	regModule_Gate2Bus(10);
+	regModule_Output(11);
+	//regModule_Sequencer(12);
 
-//	regModule_Sequencer(8);
-
-	numberOfModules=11;
+	numberOfModules=12;
 
 	return;
 }
