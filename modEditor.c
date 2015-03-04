@@ -1,4 +1,4 @@
-
+#include <stdio.h>
 void printConnectsTo(int bus);
 void printModOuts(void);
 void printModIns(int id);

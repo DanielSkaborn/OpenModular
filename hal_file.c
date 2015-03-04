@@ -4,64 +4,38 @@
 // 20150216
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
-/*
-#define OVERSAMPLE			4
-#define SAMPLERATEOUT		44100
-#define SAMPLERATEOUTF		44100.0f
-*/
+
 #define SAMPLERATE		44100
 #define SAMPLERATEF		44100.0f
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pthread.h>
 
-#define MIDIDEVICE		"/dev/snd/midiC1D0"
+pthread_t patchconnector;
 int MIDIin_d;
 int MIDIout_d;
-unsigned char globalmididata;
 
 int MIDIinit(void) {
-
-	int flags;
- 	MIDIin_d  = open(MIDIDEVICE,O_RDONLY, 0);
-	MIDIout_d = open(MIDIDEVICE,O_WRONLY,0);
-
-	flags = fcntl(MIDIin_d, F_GETFL, 0);
-	fcntl(MIDIin_d, F_SETFL, flags | O_NONBLOCK);
-
-}
-
-int MIDIdataavail(void) {
-	int ret;
-	ret = read(MIDIin_d, &globalmididata, 1 );
-//	if (ret==1) printf("%d\n",globalmididata);
 	return 0;
-}
-unsigned char MIDIrcv(void) {
-	return globalmididata;
 }
 
 int MIDIin(unsigned char *data) {
-	return read(MIDIin_d, data, 1 );
+	return 0;
 }
 
 
 void MIDIout(unsigned char outbuf) {
-	unsigned char temp;
-	
-	write(MIDIout_d, &outbuf, 1);
-/*	
+
 	if (outbuf&0x80) printf("\n");
 	printf("%02X ",outbuf);
-*/	return;
+	
+	return;
 }
 
 int AudioFIFOfull(void) {
 	return 0;
-}
-void busspy(int bus) {
-	printf("%03d %03f ",bus,patchBus[bus][togglerOut]);
 }
 
 void AudioOut(void) {
@@ -78,12 +52,11 @@ void AudioOut(void) {
 
 	temp = (int16_t)(patchBus[0][togglerOut]*32767);
 	fwrite(&temp, sizeof(temp), 1, f);
-	
 	temp = (int16_t)(patchBus[1][togglerOut]*32767);
 	fwrite(&temp, sizeof(temp), 1, f);
     c++;
     
-	if (c==SAMPLERATE*90) {
+	if (c==SAMPLERATE*5) {
 		fclose(f);
 		printf("Closed file OpenModularAudio.bin\n");
 	}
@@ -91,7 +64,12 @@ void AudioOut(void) {
 	return;
 }
 
+void editor(void) {
+	pthread_create(&patchconnector, NULL, patchtexteditor, NULL);
+	return;
+}
+
 int main(void) {
-	MIDIinit();
 	mainOpenModular();
+	return 0;
 }

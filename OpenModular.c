@@ -6,7 +6,9 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
+#include <math.h>
 #include <stdint.h>
+
 
 // receive MIDIchannel-1 (0 to 15)
 #define CHANNEL 0
@@ -17,6 +19,7 @@
 void mainOpenModular(void);
 
 #include "OpenModularVarsM.h"
+#include "modEditor.c"
 //#include "hal_text.c"
 //#include "hal_RPi.c"
 //#include "hal_file.c"

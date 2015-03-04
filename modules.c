@@ -5,15 +5,10 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
-#include <math.h>
 
 
-#define e		2.718281828459045
-
-//float cosLut50[] = {1, 0.9921147013, 0.9685831611, 0.9297764859, 0.87630668, 0.8090169944, 0.7289686274, 0.6374239897, 0.535826795, 0.4257792916, 0.3090169944, 0.1873813146, 0.0627905195, -0.0627905195, -0.1873813146, -0.3090169944, -0.4257792916, -0.535826795, -0.6374239897, -0.7289686274, -0.8090169944, -0.87630668, -0.9297764859, -0.9685831611, -0.9921147013, -1, -0.9921147013, -0.9685831611, -0.9297764859, -0.87630668, -0.8090169944, -0.7289686274, -0.6374239897, -0.535826795, -0.4257792916, -0.3090169944, -0.1873813146, -0.0627905195, 0.0627905195, 0.1873813146, 0.3090169944, 0.4257792916, 0.535826795, 0.6374239897, 0.7289686274, 0.8090169944, 0.87630668, 0.9297764859, 0.9685831611, 0.9921147013, 1};
-
-float sinustable[8193]; //18530718
-//float wavetable[257];
+float sinustable[8193];
+float wavetable[4097][2];
 
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
@@ -557,7 +552,7 @@ void module_Filter1(int id) {
 void regModule_Filter1(int id) {
 	moduleRegistry[id] = module_Filter1;
 	
-//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN  CF  RES                                                     \0";
 	char outNames[4*MAXOUT+1] = "LP  HP  BP                                                      \0";
 //               "        \0";
@@ -697,7 +692,7 @@ void module_Oscilator1(int id) {
 		AOUT0 = temp;
 		AOUT1 = tempsq;
 	
-		AOUT2 = sin(phase);
+		AOUT2 = sinf(phase);
 		phase = phase + ((6.28318530718 * freq) / SAMPLERATEF);
 		if (phase > 6.28318530718)
 			phase = phase - 6.28318530718;
@@ -795,59 +790,78 @@ void regModule_Oscilator2(int id) {
 
 }
 
-void module_Additive(int id) {
-	// AOUT0 : WAVEOUT
-	// AIN0	 : Level1
-	// AIN1  : Level2
-	// AIN2	 : Level3
-	// AIN3  : Level4
-	// AIN4	 : Level5
-	// AIN5  : Level6
-	// AIN6	 : Level7
-	// AIN7  : Level8
-	// AIN8	 : Frequency Steps
-	// AIN9  : Tune
-	// AIN10 : Level out
-	// AIN11 : 
-	// AIN12 : 
-	// AIN13 : 
-	// AIN14 : 
-	// AIN15 : 
-	
+void module_WavetableOsc(int id) {
+	static int switcher=0;
 	volatile static unsigned char lastnote=0;
-	int i;
-	static float toneFreq=20.1, step=100.0, out=0.0;
-	float freq[9];
-	volatile static float phase[9] = {0,0,0,0, 0,0,0,0 ,0};
+	static float toneFreq=20.1;
+	float freq;
+	volatile static float phase = 0.0;
 	
 	if (NOTE != lastnote) {
 		lastnote=NOTE;
 		toneFreq = noteToFreqLUT[NOTE];
 	}	
-
-	// Apply Tune to the basetone
-	freq[0] = toneFreq + (AIN9*10.0);
-	if ( freq[0] < 20.0) {
-		freq[0] = 20.0;
-	}
-
-	// Calculate the frequencies
-	step = (AIN8 + 2.00);
-	if (step < 1.00) step = 1.00;
-
-	for (i=1;i<8;i++) {
-		freq[i] = freq[i-1] + (step*toneFreq/12.0);
-	}
 	
+	freq=toneFreq;
+
+	phase = phase + (4096.0/SAMPLERATEF * freq );
+		if (phase > 4096.0) {
+			phase = phase - 4096.0;
+			switcher++;
+			if (switcher==2) switcher=0;
+		}
+		AOUT0 = wavetable[(int)(phase)][switcher];
+}
+
+void regModule_WavetableOsc(int id) {
+	int i;
+	moduleRegistry[id] = module_WavetableOsc;
+
+	for (i=0;i<2048;i++)
+		wavetable[i][0] = -1.0;
+	for (i=2049;i<4096;i++)
+		wavetable[i][0] = 1.0;
+	for (i=0;i<4096;i++)
+		wavetable[i][1] = (i/1024.0)-1.0;
+
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "                                                                \0";
+	char outNames[4*MAXOUT+1] = "OUT                                                             \0";
+//               "        \0";
+	char name[9]="WaveTabl\0";
+	
+	modIns[id]     = 0;
+	modOuts[id]    = 1;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+
+}
+void module_Additive(int id) {
+	
+	volatile static unsigned char lastnote=0;
+	int i;
+	static float toneFreq=20.1, out=0.0;
+	float freq;
+	volatile static float phase[20] = {0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, };
+	
+	if (NOTE != lastnote) {
+		lastnote=NOTE;
+		toneFreq = noteToFreqLUT[NOTE];
+	}	
+			
+	freq=toneFreq;
+
 	out = 0.0;
-	for (i=0;i<8;i++) {
-		phase[i] = phase[i] + (8192.0/SAMPLERATEF * freq[i] );
+	for (i=0;i<20;i++) {
+		phase[i] = phase[i] + (8192.0/SAMPLERATEF * freq );
 		if (phase[i] > 8192.0) phase[i] = phase[i] - 8192.0;
-		if (freq[i] < (SAMPLERATEF/2.0))
-			out = out + (sinustable[(int)(phase[i])] * (patchBus[patchIn[id][i]][togglerIn]));
+		if (freq < (SAMPLERATEF/2.0))
+			out = out + (sinustable[(int)(phase[i])] * (1/(float)(i+1)));
+		freq=freq+toneFreq+(toneFreq*((AIN0+1.0)/2.0));
 	}
-	
-	AOUT0 = out * (AIN10+1.0)/8.0;
+	AOUT0 = out * (AIN1+1.0);
 }
 
 void regModule_Additive(int id) {
@@ -855,16 +869,16 @@ void regModule_Additive(int id) {
 	moduleRegistry[id] = module_Additive;
 
 	for (i=0;i<8193;i++)
-		sinustable[i] = sin(2.0*3.14159265359*(float)(i)/8192.0)*sin(2.0*3.14159265359*(float)(i)/8192.0)*sin(2.0*3.14159265359*(float)(i)/8192.0);
+		sinustable[i] = sinf(2.0*3.14159265359*(float)(i)/8192.0)*sinf(2.0*3.14159265359*(float)(i)/8192.0);
 
 
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "LEV1LEV2LEV3LEV4LEV5LEV6LEV7LEV8STEPTUNEOUT                     \0";
+	char inNames[4*MAXIN+1]   = "SHP LEV                                                         \0";
 	char outNames[4*MAXOUT+1] = "OUT                                                             \0";
 //               "        \0";
 	char name[9]="ADDITIVE\0";
 	
-	modIns[id]     = 11;
+	modIns[id]     = 2;
 	modOuts[id]    = 1;
 	
 	copymodstrings(id, name, inNames, outNames);
@@ -903,10 +917,11 @@ void presetPatches(unsigned char prg) {
 // Registration of the modules to the OpenModular
 // This function is called by the OpenModular
 void moduleRegistration(void) {
-	regModule_Additive(0);
-	regModule_Gate2Bus(1);
-	regModule_Output(2);
-	
+	regModule_WavetableOsc(0);
+	regModule_Filter1(1);
+	regModule_Gate2Bus(2);
+	regModule_Output(3);
+
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
 	regModule_Smoothie(2);
@@ -921,7 +936,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=3;
+	numberOfModules=4;
 
 	return;
 }
