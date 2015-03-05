@@ -7,8 +7,9 @@
 
 
 
-float sinustable[8193];
-float wavetable[4097][2];
+volatile float sinustable[8193];
+volatile float wavetable[4097][3];
+volatile int tableToUse = 0;
 
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
@@ -69,14 +70,7 @@ void regModule_Output(int id) {
 	return;
 }
 
-void module_ADSR(int id) {
-	// CIN0  : Atack
-	// CIN1  : Decay
-	// CIN2  : Sustain
-	// CIN3  : Release
-	// COUT0 : ADSRcontrol
-	// GATE  : Trig on gate #
-
+void module_ADSR1(int id) {
 	volatile static int state=0;
 	volatile static unsigned char lastgate=0;
 	volatile static float d=0, signal=0, sustain=0;
@@ -100,11 +94,11 @@ void module_ADSR(int id) {
 				d=0.3;
 			signal = 0.0f;
 			state  = 2;
-			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
+//			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
 		case 2: // Attack proceed
 			signal+=d;
 			if (signal > 1.0f) {
-				printf("P\n");
+//				printf("P\n");
 				signal = 1.0f;
 				state = 3;
 			}
@@ -116,11 +110,11 @@ void module_ADSR(int id) {
 				d = 0.1;
 			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
-			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
+//			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
 		case 4: // Decay proceed
 			signal -= d;
 			if (signal < sustain) {
-				printf("S\n");
+//				printf("S\n");
 				state = 5;
 			}
 			break;
@@ -128,14 +122,14 @@ void module_ADSR(int id) {
 			break;
 		case 6: // Release
 			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
-			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
+//			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
 			state = 7;
 		case 7: // Release proceed
 			signal-=d;
 			if (signal<0.0f) {
 				signal = 0.0f;
 				state  = 0;
-				printf("ADSR end\n");
+//				printf("ADSR end\n");
 			}
 			break;
 		default:
@@ -153,13 +147,13 @@ void module_ADSR(int id) {
 }
 
 void regModule_ADSR(int id) {
-	moduleRegistry[id] = module_ADSR;
+	moduleRegistry[id] = module_ADSR1;
 
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
 //               "        \0";
-	char name[9]="ADSR    \0";
+	char name[9]="ADSR1   \0";
 
 	modIns[id]     = 6;
 	modOuts[id]    = 3;
@@ -167,6 +161,167 @@ void regModule_ADSR(int id) {
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
+
+void module_ADSR2(int id) {
+	volatile static int state=0;
+	volatile static unsigned char lastgate=0;
+	volatile static float d=0, signal=0, sustain=0;
+
+	// Gate signal trigging
+	if ( (lastgate==0) && (GATE!=0) ) {
+		state=1; // Attack
+	}
+	if ((lastgate!=0) && (GATE==0)) {
+		state=6; // Release
+	}
+
+	switch (state) {
+		case 0: // Idle
+			signal = 0.0f;
+			break;
+		case 1: // Attack calculate
+			if (AIN0 != -1)
+				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
+			else
+				d=0.3;
+			signal = 0.0f;
+			state  = 2;
+//			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
+		case 2: // Attack proceed
+			signal+=d;
+			if (signal > 1.0f) {
+//				printf("P\n");
+				signal = 1.0f;
+				state = 3;
+			}
+			break;
+		case 3: // Decay calculate
+			if (AIN0 != -1)
+				d = 1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
+			else
+				d = 0.1;
+			sustain = (float)(AIN2+1.0)/2.0;
+			state = 4;
+//			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
+		case 4: // Decay proceed
+			signal -= d;
+			if (signal < sustain) {
+//				printf("S\n");
+				state = 5;
+			}
+			break;
+		case 5: // Sustain
+			break;
+		case 6: // Release
+			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
+//			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
+			state = 7;
+		case 7: // Release proceed
+			signal-=d;
+			if (signal<0.0f) {
+				signal = 0.0f;
+				state  = 0;
+//				printf("ADSR end\n");
+			}
+			break;
+		default:
+			signal = 0.0f;
+			state=0;
+			break;
+	} //switch
+	lastgate = GATE;
+	AOUT0=signal;
+	
+	// just a little VCA
+	AOUT1=AIN4*signal;
+	AOUT2=AIN5*signal;
+	return;
+}
+
+void regModule_ADSR2(int id) {
+	moduleRegistry[id] = module_ADSR2;
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
+	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
+//               "        \0";
+	char name[9]="ADSR2   \0";
+
+	modIns[id]     = 6;
+	modOuts[id]    = 3;
+
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
+void module_WTCrunch(int id) {
+	static float s=0;
+	static int state = 0;
+	static int tableToEdit=1;
+	static int c=0;
+	static int rest;
+			
+	if (c==4097) {
+		state=0;
+		c=0;
+		s=0;
+		tableToEdit++;
+		if (tableToEdit == 3) tableToEdit=0;
+		tableToUse++;
+		if (tableToUse == 3) tableToUse=0;
+	}
+	
+	switch (state) {
+		case 0:
+			s = wavetable[c][tableToEdit] = s + (AIN4*(AIN5+1.0)/3.0) + (AIN0+1.1)/1024;
+			if ( s < -1.0 ) state = 1;
+			if ( s >  1.0 ) state = 1;
+			break;
+		case 1:
+			s = wavetable[c][tableToEdit] = s + (AIN4*(AIN5+1.0)/3.0) - (AIN1+1.1)/1024;
+			if ( s < -1.0 ) state = 2;
+			if ( s >  1.0 ) state = 2;
+			break;
+		case 2:
+			s = wavetable[c][tableToEdit] = s + (AIN4*(AIN5+1.0)/3.0) + (AIN2+1.1)/1024;
+			if ( s < -1.0 ) state = 3;
+			if ( s >  1.0 ) state = 3;
+			break;
+		case 3:
+			rest = 4096-c;
+			state = 4;
+		case 4:
+			s = wavetable[c][tableToEdit] = s + (AIN4*(AIN5+1.0)/3.0) - (AIN1+1.1)/rest;
+			if ( s < -1.0 ) state = 5;
+			if ( s >  1.0 ) state = 5;
+			break;
+		case 5:
+			s = wavetable[c][tableToEdit] = s + (AIN4*(AIN5+1.0)/3.0);
+			break;
+		default:
+			state = 0;
+			break;		
+	}
+	c++;
+	
+	return;
+}
+
+void regModule_WTCrunch(int id) {
+	moduleRegistry[id] = module_WTCrunch;
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "XYZ YZX ZXY ZYX IN  iLEV                                        \0";
+	char outNames[4*MAXOUT+1] = "                                                                \0";
+//               "        \0";
+	char name[9]="WTCrunch\0";
+
+	modIns[id]     = 5;
+	modOuts[id]    = 0;
+
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
+
 void module_Gate2Bus(int id) { 
 	static float temp1=0;
 	static float temp2=0;
@@ -250,7 +405,7 @@ void module_LFO(int id) {
 void regModule_LFO(int id) {
 	moduleRegistry[id] = module_LFO;
 	
-//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
 	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
 //               "        \0";
@@ -825,8 +980,7 @@ void module_WavetableOsc(int id) {
 	phase = phase + (4096.0/SAMPLERATEF * (freq+AIN0*5.0) );
 	if (phase > 4096.0) {
 		phase = phase - 4096.0;
-		switcher++;
-		if (switcher==2) switcher=0;
+		switcher = tableToUse;
 	}
 	
 	temp = AOUT0 = wavetable[(int)(phase)][switcher];
@@ -879,8 +1033,7 @@ void module_WavetableOsc2(int id) {
 	phase = phase + (4096.0/SAMPLERATEF * (freq+AIN0*5.0) );
 	if (phase > 4096.0) {
 		phase = phase - 4096.0;
-		switcher++;
-		if (switcher==2) switcher=0;
+		switcher = tableToUse;
 	}
 	
 	temp = AOUT0 = wavetable[(int)(phase)][switcher];
@@ -1009,6 +1162,7 @@ void moduleRegistration(void) {
 	regModule_LFO(7);
 	regModule_Smoothie(8);
 	regModule_SampleAndHold(9);
+	regModule_WTCrunch(10);
 
 	
 /*	regModule_Oscilator1(0);
@@ -1025,7 +1179,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=10;
+	numberOfModules=11;
 
 	return;
 }

@@ -95,9 +95,11 @@ void savePatch(void) {
 void *patchtexteditor(void *arg) {
 	int p, id, in;
 
-	printf("\n\nOpenModular TextPatcher\n\n");
+	
 	
 	while(1) {
+		printf("\033[2J"); // clear screen
+		printf("OpenModular TextPatcher\n\n");
 		printModOuts();
 		
 		printf("\nPB> ");
