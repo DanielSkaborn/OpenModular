@@ -94,36 +94,48 @@ void module_ADSR(int id) {
 			signal = 0.0f;
 			break;
 		case 1: // Attack calculate
-			d=255.0f/(SAMPLERATEF/255.0f * (float)(AIN0+1));
-//			signal = 0.0f;
+			if (AIN0 != -1)
+				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
+			else
+				d=0.3;
+			signal = 0.0f;
 			state  = 2;
+			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
 		case 2: // Attack proceed
 			signal+=d;
-			if (signal>255.0f) {
-				signal = 255.0f;
+			if (signal > 1.0f) {
+				printf("P\n");
+				signal = 1.0f;
 				state = 3;
 			}
 			break;
 		case 3: // Decay calculate
-			d=255.0f/(SAMPLERATEF/255.0f * (float)(AIN1));
-			sustain = (float)(AIN2);
+			if (AIN0 != -1)
+				d = 1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
+			else
+				d = 0.1;
+			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
+			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
 		case 4: // Decay proceed
-			signal-=d;
+			signal -= d;
 			if (signal < sustain) {
-				signal = sustain;
+				printf("S\n");
 				state = 5;
 			}
 			break;
 		case 5: // Sustain
 			break;
 		case 6: // Release
-			d=255.0f/(SAMPLERATEF/255.0f * (float)(AIN3));
+			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
+			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
+			state = 7;
 		case 7: // Release proceed
 			signal-=d;
 			if (signal<0.0f) {
 				signal = 0.0f;
 				state  = 0;
+				printf("ADSR end\n");
 			}
 			break;
 		default:
@@ -132,7 +144,11 @@ void module_ADSR(int id) {
 			break;
 	} //switch
 	lastgate = GATE;
-	AOUT0=(unsigned char)(signal);
+	AOUT0=signal;
+	
+	// just a little VCA
+	AOUT1=AIN4*signal;
+	AOUT2=AIN5*signal;
 	return;
 }
 
@@ -140,13 +156,13 @@ void regModule_ADSR(int id) {
 	moduleRegistry[id] = module_ADSR;
 
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL                                                 \0";
-	char outNames[4*MAXOUT+1] = "ADSR                                                            \0";
+	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
+	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
 //               "        \0";
 	char name[9]="ADSR    \0";
 
-	modIns[id]     = 4;
-	modOuts[id]    = 1;
+	modIns[id]     = 6;
+	modOuts[id]    = 3;
 
 	copymodstrings(id, name, inNames, outNames);
 	return;
@@ -437,20 +453,20 @@ void module_Sequencer(int id) {
 		
 		switch(step) {
 			case 0:
-				note[0]=42;
+				note[0]=49;
 				gate[1]=200;
-//				note[1]=47;
+				note[1]=47;
 				break;
 			case 1:
-				note[0]=49;
+				note[0]=47;
 //				note[1]=49;
 				break;
 			case 2:
-				note[0]=47;
-//				note[1]=42;
+				note[0]=42;
+				note[1]=42;
 				break;
 			case 3:
-				note[0]=42;
+				note[0]=49;
 				gate[1]=0;
 				break;
 			case 4:
@@ -458,7 +474,7 @@ void module_Sequencer(int id) {
 				break;
 			case 5:
 				note[0]=47;
-//				note[1]=49;
+				note[1]=49;
 				gate[1]=100;
 				break;
 			case 6:
@@ -796,21 +812,26 @@ void module_WavetableOsc(int id) {
 	static float toneFreq=20.1;
 	float freq;
 	volatile static float phase = 0.0;
+	float temp;
+	unsigned char lowbit;
 	
 	if (NOTE != lastnote) {
 		lastnote=NOTE;
 		toneFreq = noteToFreqLUT[NOTE];
-	}	
+	}
 	
 	freq=toneFreq;
 
-	phase = phase + (4096.0/SAMPLERATEF * freq );
-		if (phase > 4096.0) {
-			phase = phase - 4096.0;
-			switcher++;
-			if (switcher==2) switcher=0;
-		}
-		AOUT0 = wavetable[(int)(phase)][switcher];
+	phase = phase + (4096.0/SAMPLERATEF * (freq+AIN0*5.0) );
+	if (phase > 4096.0) {
+		phase = phase - 4096.0;
+		switcher++;
+		if (switcher==2) switcher=0;
+	}
+	
+	temp = AOUT0 = wavetable[(int)(phase)][switcher];
+	lowbit = (unsigned char)(temp*255);
+	AOUT1 = ((float)(lowbit))/255.0;
 }
 
 void regModule_WavetableOsc(int id) {
@@ -826,18 +847,73 @@ void regModule_WavetableOsc(int id) {
 
 
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "                                                                \0";
-	char outNames[4*MAXOUT+1] = "OUT                                                             \0";
+	char inNames[4*MAXIN+1]   = "TUNE                                                            \0";
+	char outNames[4*MAXOUT+1] = "OUT 8BIT                                                        \0";
 //               "        \0";
 	char name[9]="WaveTabl\0";
 	
-	modIns[id]     = 0;
-	modOuts[id]    = 1;
+	modIns[id]     = 1;
+	modOuts[id]    = 2;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
 
 }
+
+void module_WavetableOsc2(int id) {
+	static int switcher=0;
+	volatile static unsigned char lastnote=0;
+	static float toneFreq=20.1;
+	float freq;
+	volatile static float phase = 0.0;
+	float temp;
+	unsigned char lowbit;
+	
+	if (NOTE != lastnote) {
+		lastnote=NOTE;
+		toneFreq = noteToFreqLUT[NOTE];
+	}
+	
+	freq=toneFreq;
+
+	phase = phase + (4096.0/SAMPLERATEF * (freq+AIN0*5.0) );
+	if (phase > 4096.0) {
+		phase = phase - 4096.0;
+		switcher++;
+		if (switcher==2) switcher=0;
+	}
+	
+	temp = AOUT0 = wavetable[(int)(phase)][switcher];
+	lowbit = (unsigned char)(temp*255);
+	AOUT1 = ((float)(lowbit))/255.0;
+}
+
+void regModule_WavetableOsc2(int id) {
+	int i;
+	moduleRegistry[id] = module_WavetableOsc2;
+
+	for (i=0;i<2048;i++)
+		wavetable[i][0] = -1.0;
+	for (i=2049;i<4096;i++)
+		wavetable[i][0] = 1.0;
+	for (i=0;i<4096;i++)
+		wavetable[i][1] = (i/1024.0)-1.0;
+
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "TUNE                                                            \0";
+	char outNames[4*MAXOUT+1] = "OUT 8BIT                                                        \0";
+//               "        \0";
+	char name[9]="WaveTabl\0";
+	
+	modIns[id]     = 1;
+	modOuts[id]    = 2;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+
+}
+
 void module_Additive(int id) {
 	
 	volatile static unsigned char lastnote=0;
@@ -894,7 +970,11 @@ void setPB(int bus, float v) {
 
 void presetPatches(unsigned char prg) {
 	switch (prg) {
-		case 0: patchIn[0][0] = 73; patchIn[0][1] = 9; patchIn[0][2] = 12; patchIn[0][3] = 72; patchIn[0][4] = 91; patchIn[0][5] = 93; patchIn[0][6] = 5; patchIn[0][7] = 89; patchIn[0][8] = 10; patchIn[0][9] = 16; patchIn[0][10] = 7; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchIn[1][2] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 120; patchIn[2][1] = 120; patchNote[2] = 2; patchGate[2] = 2;
+		case 0: patchIn[0][0] = 255; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 121; patchIn[2][1] = 135; patchIn[2][2] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 123; patchIn[3][1] = 136; patchIn[3][2] = 135; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 124; patchIn[4][1] = 127; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 130; patchIn[5][1] = 131; patchNote[5] = 2; patchGate[5] = 2; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 255; patchIn[7][1] = 255; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 145; patchIn[8][1] = 145; patchIn[8][2] = 255; patchIn[8][3] = 255; patchIn[8][4] = 255; patchIn[8][5] = 255; patchIn[8][6] = 255; patchIn[8][7] = 255; patchIn[8][8] = 255; patchIn[8][9] = 255; patchIn[8][10] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 120; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; 
+
+//patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 121; patchIn[2][1] = 132; patchIn[2][2] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 123; patchIn[3][1] = 133; patchIn[3][2] = 255; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 124; patchIn[4][1] = 127; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 130; patchIn[5][1] = 131; patchNote[5] = 2; patchGate[5] = 2; patchNote[6] = 2; patchGate[6] = 2; 
+			break;
+		//patchIn[0][0] = 73; patchIn[0][1] = 9; patchIn[0][2] = 12; patchIn[0][3] = 72; patchIn[0][4] = 91; patchIn[0][5] = 93; patchIn[0][6] = 5; patchIn[0][7] = 89; patchIn[0][8] = 10; patchIn[0][9] = 16; patchIn[0][10] = 7; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchIn[1][2] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 120; patchIn[2][1] = 120; patchNote[2] = 2; patchGate[2] = 2;
 			break;
 		//case 0: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 138; patchIn[11][1] = 141; patchNote[11] = 2; patchGate[11] = 2; patchNote[12] = 2; patchGate[12] = 2;
 			break;
@@ -917,11 +997,20 @@ void presetPatches(unsigned char prg) {
 // Registration of the modules to the OpenModular
 // This function is called by the OpenModular
 void moduleRegistration(void) {
+	//regModule_Oscilator1(0);
 	regModule_WavetableOsc(0);
-	regModule_Filter1(1);
-	regModule_Gate2Bus(2);
-	regModule_Output(3);
+	regModule_WavetableOsc2(1);
+	regModule_Filter1(2);
+	regModule_Filter2(3);
+	regModule_Gate2Bus(4);
+	regModule_Output(5);
+	regModule_ADSR(6);
+//	regModule_Sequencer(6);
+	regModule_LFO(7);
+	regModule_Smoothie(8);
+	regModule_SampleAndHold(9);
 
+	
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
 	regModule_Smoothie(2);
@@ -936,7 +1025,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=4;
+	numberOfModules=10;
 
 	return;
 }

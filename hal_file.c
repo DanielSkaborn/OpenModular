@@ -56,7 +56,7 @@ void AudioOut(void) {
 	fwrite(&temp, sizeof(temp), 1, f);
     c++;
     
-	if (c==SAMPLERATE*5) {
+	if (c==SAMPLERATE*60) {
 		fclose(f);
 		printf("Closed file OpenModularAudio.bin\n");
 	}

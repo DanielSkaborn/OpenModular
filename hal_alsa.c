@@ -15,8 +15,8 @@
 #define SAMPLERATE		44100
 #define SAMPLERATEF		44100.0f
 
-#define MIDIDEVICE		"/dev/snd/midiC2D0"
-#define ALSADEVICE      "plughw:1,0"
+#define MIDIDEVICE		"/dev/snd/midiC1D0"
+#define ALSADEVICE      "plughw:2,0"
 
 int MIDIin_d;
 int MIDIout_d;
