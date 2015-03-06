@@ -90,6 +90,7 @@ void savePatch(void) {
 		printf("patchNote[%d] = %d; ", id, patchNote[id]);
 		printf("patchGate[%d] = %d; ", id, patchGate[id]);
 	}
+	scanf("%d",&in);
 }
 
 void *patchtexteditor(void *arg) {

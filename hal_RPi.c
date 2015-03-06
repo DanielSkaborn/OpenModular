@@ -108,20 +108,19 @@ volatile unsigned int* pwmR;
 /** UART Register set */
 volatile unsigned int* uartR;
 
-
-
-int MIDIdataavail(void) { // pollcheck of MIDI input
-    if((uartR[UART0_FR]&0x10)==0)
-		return 1;
-	else
-		return 0;
-}
-unsigned char MIDIrcv(void) {
-	return uartR[UART0_DR];
-}
 void MIDIout(unsigned char outbuf) {
 	
 	return;
+}
+
+int MIDIin(unsigned char *data) {
+	if((uartR[UART0_FR]&0x10)==0) {
+		*data = (unsigned char)(uartR[UART0_DR]);
+		return 1;
+	} else {
+		return 0;
+	}
+	return 0;
 }
 
 int AudioFIFOfull(void) {
@@ -142,9 +141,9 @@ void AudioOut(void) {
 	volatile static int c;
 	
 	int out;
-	out = (int)(audioPatchBus[0]*0x800)+0x800;
+	out = ((int)(patchBus[OUTL][togglerOut]*0x800)+0x800) & 0xFFF;
 	pwmR[PWM_FIF1] = out;
-	out = (int)(audioPatchBus[1]*0x800)+0x800;
+	out = ((int)(patchBus[OUTR][togglerOut]*0x800)+0x800) & 0xFFF;
 	pwmR[PWM_FIF1] = out;
 
 	c++;

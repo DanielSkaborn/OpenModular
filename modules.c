@@ -7,7 +7,7 @@
 
 
 
-volatile float sinustable[8193];
+//volatile float sinustable[8193];
 volatile float wavetable[4097][3];
 volatile int tableToUse = 0;
 
@@ -75,6 +75,13 @@ void module_ADSR1(int id) {
 	volatile static unsigned char lastgate=0;
 	volatile static float d=0, signal=0, sustain=0;
 
+	if (id==-1) { // init statics
+		state=0;
+		lastgate=0;
+		d=0.0; signal=0.0; sustain=0.0;
+		return;
+	}
+
 	// Gate signal trigging
 	if ( (lastgate==0) && (GATE!=0) ) {
 		state=1; // Attack
@@ -94,11 +101,9 @@ void module_ADSR1(int id) {
 				d=0.3;
 			signal = 0.0f;
 			state  = 2;
-//			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
 		case 2: // Attack proceed
 			signal+=d;
 			if (signal > 1.0f) {
-//				printf("P\n");
 				signal = 1.0f;
 				state = 3;
 			}
@@ -110,11 +115,9 @@ void module_ADSR1(int id) {
 				d = 0.1;
 			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
-//			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
 		case 4: // Decay proceed
 			signal -= d;
 			if (signal < sustain) {
-//				printf("S\n");
 				state = 5;
 			}
 			break;
@@ -122,14 +125,12 @@ void module_ADSR1(int id) {
 			break;
 		case 6: // Release
 			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
-//			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
 			state = 7;
 		case 7: // Release proceed
 			signal-=d;
 			if (signal<0.0f) {
 				signal = 0.0f;
 				state  = 0;
-//				printf("ADSR end\n");
 			}
 			break;
 		default:
@@ -145,10 +146,10 @@ void module_ADSR1(int id) {
 	AOUT2=AIN5*signal;
 	return;
 }
-
-void regModule_ADSR(int id) {
+void regModule_ADSR1(int id) {
 	moduleRegistry[id] = module_ADSR1;
-
+	module_ADSR1(-1); // init
+	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
@@ -167,6 +168,13 @@ void module_ADSR2(int id) {
 	volatile static unsigned char lastgate=0;
 	volatile static float d=0, signal=0, sustain=0;
 
+	if (id==-1) { // init statics
+		state=0;
+		lastgate=0;
+		d=0.0; signal=0.0; sustain=0.0;
+		return;
+	}
+
 	// Gate signal trigging
 	if ( (lastgate==0) && (GATE!=0) ) {
 		state=1; // Attack
@@ -186,11 +194,9 @@ void module_ADSR2(int id) {
 				d=0.3;
 			signal = 0.0f;
 			state  = 2;
-//			printf("A %f %f\n",d, 1/(d*SAMPLERATEF));
 		case 2: // Attack proceed
 			signal+=d;
 			if (signal > 1.0f) {
-//				printf("P\n");
 				signal = 1.0f;
 				state = 3;
 			}
@@ -202,11 +208,9 @@ void module_ADSR2(int id) {
 				d = 0.1;
 			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
-//			printf("D %f %f S %f\n",d, 1/(d*SAMPLERATEF),sustain);
 		case 4: // Decay proceed
 			signal -= d;
 			if (signal < sustain) {
-//				printf("S\n");
 				state = 5;
 			}
 			break;
@@ -214,14 +218,12 @@ void module_ADSR2(int id) {
 			break;
 		case 6: // Release
 			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
-//			printf("R %f %f\n",d, 1/(d*SAMPLERATEF));
 			state = 7;
 		case 7: // Release proceed
 			signal-=d;
 			if (signal<0.0f) {
 				signal = 0.0f;
 				state  = 0;
-//				printf("ADSR end\n");
 			}
 			break;
 		default:
@@ -237,10 +239,10 @@ void module_ADSR2(int id) {
 	AOUT2=AIN5*signal;
 	return;
 }
-
 void regModule_ADSR2(int id) {
 	moduleRegistry[id] = module_ADSR2;
-
+	module_ADSR2(-1); // init
+	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
@@ -253,13 +255,23 @@ void regModule_ADSR2(int id) {
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
+
 void module_WTCrunch(int id) {
 	static float s=0;
 	static int state = 0;
 	static int tableToEdit=1;
 	static int c=0;
 	static int rest;
-			
+	
+	if (id==-1) {
+		s=0.0;
+		state = 0;
+		tableToEdit=1;
+		c=0;
+		rest=0;
+		return;
+	}
+	
 	if (c==4097) {
 		state=0;
 		c=0;
@@ -305,10 +317,10 @@ void module_WTCrunch(int id) {
 	
 	return;
 }
-
 void regModule_WTCrunch(int id) {
 	moduleRegistry[id] = module_WTCrunch;
-
+	module_WTCrunch(-1);
+	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "XYZ YZX ZXY ZYX IN  iLEV                                        \0";
 	char outNames[4*MAXOUT+1] = "                                                                \0";
@@ -326,6 +338,12 @@ void module_Gate2Bus(int id) {
 	static float temp1=0;
 	static float temp2=0;
 	float rel;
+	
+	if (id == -1) {
+		temp1=0.0; temp2=0.0;
+		return;
+	}
+	
 	AOUT2 = (float)(gate[0]) / 128.0;
 	AOUT3 = (float)(gate[1]) / 128.0;
 
@@ -349,10 +367,9 @@ void module_Gate2Bus(int id) {
 	AOUT1 = temp2 * AIN1;
 	return;
 }
-
 void regModule_Gate2Bus(int id) {
 	moduleRegistry[id] = module_Gate2Bus;
-
+	module_Gate2Bus(-1); // init
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN1 IN2 R                                                       \0";
 	char outNames[4*MAXOUT+1] = "GA1 GA2 G1  G2                                                  \0";
@@ -365,19 +382,24 @@ void regModule_Gate2Bus(int id) {
 	copymodstrings(id, name, inNames, outNames);
 	return;
 }
-void module_LFO(int id) {
-	// CIN0	 : 1/rate
-	// CIN1  : max
 
+void module_LFO(int id) {
 	volatile static int counter=0;
 	volatile static int countto=10;
 	volatile static int dir=0;
 	volatile static float accout=0.0;
 	volatile static float temp0,temp1;
+	
+	if (id==-1) { // init statics
+		counter=0; countto=10;
+		dir=0; accout=0.0;
+		temp0=0.0; temp1=0.0;
+		return;
+	}
 			
 	counter++;
 	if ( counter == countto ) {
-//		printf("LFOstep\n");
+
 		
 		temp0=AIN0;
 		temp0+=1.0;
@@ -404,7 +426,7 @@ void module_LFO(int id) {
 }
 void regModule_LFO(int id) {
 	moduleRegistry[id] = module_LFO;
-	
+	module_LFO(-1); // init
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
 	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
@@ -419,19 +441,21 @@ void regModule_LFO(int id) {
 }
 
 void module_LFO2(int id) {
-	// CIN0	 : 1/rate
-	// CIN1  : max
-
 	volatile static int counter=0;
 	volatile static int countto=10;
 	volatile static int dir=0;
 	volatile static float accout=0.0;
 	volatile static float temp0,temp1;
+
+	if (id==-1) { // init statics
+		counter=0; countto=10;
+		dir=0; accout=0.0;
+		temp0=0.0; temp1=0.0;
+		return;
+	}
 			
 	counter++;
 	if ( counter == countto ) {
-//		printf("LFOstep\n");
-		
 		temp0=AIN0;
 		temp0+=1.0;
 		if (temp0<0.0) temp0=0.0;
@@ -456,7 +480,8 @@ void module_LFO2(int id) {
 	return;
 }
 void regModule_LFO2(int id) {
-	moduleRegistry[id] = module_LFO;
+	moduleRegistry[id] = module_LFO2;
+	module_LFO2(-1); // init
 	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
@@ -472,19 +497,14 @@ void regModule_LFO2(int id) {
 }
 
 void module_Smoothie(int id) {
-	// Smoothie makes controller changes smooth, and it also interleaves
-	// the changes, useful to limit CPU load of filter constants calculations
-	// AIN0
-	//  ...
-	// AIN9
-	// AIN10 Smoothrate
-	// AOUT0
-	//  ...
-	// AOUT9
-
 	volatile static int counter=0;
 	volatile float smooth;
 	
+	if (id==-1) {
+		counter=0;
+		smooth=0.0;
+		return;
+	}
 	
 	counter++;
 	if (counter>50) counter=0;
@@ -544,6 +564,7 @@ void module_Smoothie(int id) {
 }
 void regModule_Smoothie(int id) {
 	moduleRegistry[id] = module_Smoothie;
+	module_Smoothie(-1); // init
 //                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 IN4 IN5 IN6 IN7 IN8 IN9 SMTH                    \0";
 	char outNames[4*MAXOUT+1] = "OUT0OUT1OUT2OUT3OUT4OUT5OUT6OUT7OUT8OUT9                        \0";
@@ -558,12 +579,13 @@ void regModule_Smoothie(int id) {
 }
 
 void module_SampleAndHold(int id) {
-	//AIN0   : Source to sample
-	//AIN2   : holdTime
-	//AOUT0  : SampleAndHold output
-	
 	volatile static int counter=0;
 	float temp;
+
+	if (id==-1) {
+		counter=0;
+		return;
+	}
 
 	counter--;
 	if (counter<0) {
@@ -579,6 +601,7 @@ void module_SampleAndHold(int id) {
 }
 void regModule_SampleAndHold(int id) {
 	moduleRegistry[id] = module_SampleAndHold;
+	module_SampleAndHold(-1);
 	
 //                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN  TIME                                                        \0";
@@ -597,6 +620,12 @@ void module_Sequencer(int id) {
 	volatile static int step = 0;
 	volatile static int counter = -1;
 	
+	if (id==-1) { // init statics
+		step=0;
+		counter = 0;
+		return;
+	}
+	
 	counter++;
 	if (counter > SAMPLERATE/10) {
 		gate[0]=0;
@@ -604,17 +633,17 @@ void module_Sequencer(int id) {
 	if (counter > SAMPLERATE/5) {
 		step++;
 		counter=0;
-		gate[0]=126;
 		
 		switch(step) {
 			case 0:
+				gate[0]=126;
 				note[0]=49;
 				gate[1]=200;
 				note[1]=47;
 				break;
 			case 1:
 				note[0]=47;
-//				note[1]=49;
+				note[1]=49;
 				break;
 			case 2:
 				note[0]=42;
@@ -648,6 +677,7 @@ void module_Sequencer(int id) {
 }
 void regModule_Sequencer(int id) {
 	moduleRegistry[id] = module_Sequencer;
+	module_Sequencer(-1); // init
 	
 //                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "                                                                \0";
@@ -659,6 +689,7 @@ void regModule_Sequencer(int id) {
 	modOuts[id]    = 0;
 	
 	copymodstrings(id, name, inNames, outNames);
+	
 	return;
 }
 
@@ -685,6 +716,14 @@ void module_Filter1(int id) {
 	volatile static float t1=0, t2=0;              //temporary buffers
 	
 	float temp;
+	
+	if (id == -1) { // init statics
+		lastcin0 = -2; lastcin1 = -2; frequency=0.0; resonance=0.0; freqinhz=0.0;
+		f=0.0; p=0.0; q=0.0;
+		in=0.0, b0=0.0, b1=0.0, b2=0.0, b3=0.0, b4=0.0;
+		t1=0.0, t2=0.0;
+		return;
+	}
 	
 	// Set coefficients given frequency & resonance [0.0...1.0]
 	if ((AIN1 != lastcin0) || (AIN2 != lastcin1)) {
@@ -722,6 +761,7 @@ void module_Filter1(int id) {
 }
 void regModule_Filter1(int id) {
 	moduleRegistry[id] = module_Filter1;
+	module_Filter1(-1);
 	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN  CF  RES                                                     \0";
@@ -761,6 +801,15 @@ void module_Filter2(int id) {
 	
 	volatile static float temp;
 
+	if (id == -1) { // init statics
+		lastcin0 = -2; lastcin1 = -2; frequency=0.0; resonance=0.0; freqinhz=0.0;
+		f=0.0; p=0.0; q=0.0;
+		in=0.0, b0=0.0, b1=0.0, b2=0.0, b3=0.0, b4=0.0;
+		t1=0.0, t2=0.0;
+		temp = 0.0;
+		return;
+	}
+
 	// Set coefficients given frequency & resonance [0.0...1.0]
 	if ((AIN1 != lastcin0) || (AIN2 != lastcin1)) {
 		if (AIN1<-1.0) temp=-0.99; else temp=AIN1; 
@@ -771,9 +820,6 @@ void module_Filter2(int id) {
 		if (AIN2<-1.0) temp=-0.99; else temp=AIN2; 
 		lastcin1 = AIN2;
 		resonance = (temp+1.0)*0.5; // 0 to 1
-
-//		printf("F2: AIN1=%f CF=%f %fHz AIN2=%f res=%f\n",AIN1, frequency, freqinhz, AIN2, resonance);
-
 		q = 1.0 - frequency;
 		p = frequency + 0.8 * frequency * q;
 		f = p + p - 1.0;
@@ -797,7 +843,7 @@ void module_Filter2(int id) {
 }
 void regModule_Filter2(int id) {
 	moduleRegistry[id] = module_Filter2;
-	
+	module_Filter2(-1); // init
 //                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "IN  CF  RES                                                     \0";
 	char outNames[4*MAXOUT+1] = "LP  HP  BP                                                      \0";
@@ -812,22 +858,19 @@ void regModule_Filter2(int id) {
 }
 
 void module_Oscilator1(int id) {
-	// AOUT0 : SAWUP
-	// AOUT1 : SQUARE PWM
-	// AOUT2 : SINUS
-	// AIN0	 : PULSEWIDTH
-	// AIN1  : FINETUNE
-	// AIN2  : COARSE
-	// NOTE  :
-
 	volatile static float freq=0, toneFreq=0;
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-	int i;
-	static float temp=0;
+	volatile static float temp=0;
+	
 	volatile float tempsq;
-	static volatile double phase=0;
+	int i;
+
+	if (id == -1) { // init statics
+		d=0; pw=0; lastnote = 0; toneFreq=20.1; freq=0;
+		return;
+	}
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
@@ -863,28 +906,28 @@ void module_Oscilator1(int id) {
 		AOUT0 = temp;
 		AOUT1 = tempsq;
 	
-		AOUT2 = sinf(phase);
-		phase = phase + ((6.28318530718 * freq) / SAMPLERATEF);
-		if (phase > 6.28318530718)
-			phase = phase - 6.28318530718;
+//		AOUT2 = sinf(phase);
+//		phase = phase + ((6.28318530718 * freq) / SAMPLERATEF);
+//		if (phase > 6.28318530718)
+//			phase = phase - 6.28318530718;
 	} else {
 		AOUT0=0;
 		AOUT1=0;
-		AOUT2=0;
+//		AOUT2=0;
 	}
 	return;
 }
 void regModule_Oscilator1(int id) {
 
 	moduleRegistry[id] = module_Oscilator1;
-	
+	module_Oscilator1(-1); // init
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "PW  TUNECRS                                                     \0";
-	char outNames[4*MAXOUT+1] = "SAW SQR SIN                                                     \0";
+	char outNames[4*MAXOUT+1] = "SAW SQR                                                         \0";
 	char name[9]="OSC1    \0";
 	
 	modIns[id]     = 3;
-	modOuts[id]    = 3;
+	modOuts[id]    = 2;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
@@ -901,9 +944,15 @@ void module_Oscilator2(int id) {
 	volatile static float d=0;
 	volatile static float pw=0;
 	volatile static unsigned char lastnote=0;
-	int i;
 	static float temp=0;
+	
+	int i;
 	float tempsq;
+	
+	if (id == -1) { // init statics
+		d=0; pw=0; lastnote = 0; toneFreq=20.1; freq=0;
+		return;
+	}
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
@@ -947,7 +996,8 @@ void module_Oscilator2(int id) {
 }
 void regModule_Oscilator2(int id) {
 	moduleRegistry[id] = module_Oscilator2;
-
+	module_Oscilator2(-1);
+	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "PW  TUNE                                                        \0";
 	char outNames[4*MAXOUT+1] = "SAW SQR                                                         \0";
@@ -962,14 +1012,23 @@ void regModule_Oscilator2(int id) {
 }
 
 void module_WavetableOsc(int id) {
+	
 	static int switcher=0;
 	volatile static unsigned char lastnote=0;
 	static float toneFreq=20.1;
-	float freq;
 	volatile static float phase = 0.0;
+	float freq;
 	float temp;
 	unsigned char lowbit;
-	
+
+	if (id == -1) { // init statics
+		switcher = 0;
+		lastnote = 0;
+		toneFreq=20.1;
+		phase = 0.0;
+		return;
+	}
+
 	if (NOTE != lastnote) {
 		lastnote=NOTE;
 		toneFreq = noteToFreqLUT[NOTE];
@@ -986,12 +1045,14 @@ void module_WavetableOsc(int id) {
 	temp = AOUT0 = wavetable[(int)(phase)][switcher];
 	lowbit = (unsigned char)(temp*255);
 	AOUT1 = ((float)(lowbit))/255.0;
+	
+	return;
 }
 
 void regModule_WavetableOsc(int id) {
 	int i;
 	moduleRegistry[id] = module_WavetableOsc;
-
+	module_WavetableOsc(-1); // init
 	for (i=0;i<2048;i++)
 		wavetable[i][0] = -1.0;
 	for (i=2049;i<4096;i++)
@@ -1018,10 +1079,19 @@ void module_WavetableOsc2(int id) {
 	static int switcher=0;
 	volatile static unsigned char lastnote=0;
 	static float toneFreq=20.1;
-	float freq;
 	volatile static float phase = 0.0;
+
+	float freq;
 	float temp;
 	unsigned char lowbit;
+	
+	if (id == -1) { // init statics
+		switcher = 0;
+		lastnote = 0;
+		toneFreq=20.1;
+		phase = 0.0;
+		return;
+	}
 	
 	if (NOTE != lastnote) {
 		lastnote=NOTE;
@@ -1044,7 +1114,8 @@ void module_WavetableOsc2(int id) {
 void regModule_WavetableOsc2(int id) {
 	int i;
 	moduleRegistry[id] = module_WavetableOsc2;
-
+	module_WavetableOsc2(-1); // init
+	
 	for (i=0;i<2048;i++)
 		wavetable[i][0] = -1.0;
 	for (i=2049;i<4096;i++)
@@ -1066,7 +1137,7 @@ void regModule_WavetableOsc2(int id) {
 	return;
 
 }
-
+/*
 void module_Additive(int id) {
 	
 	volatile static unsigned char lastnote=0;
@@ -1114,7 +1185,7 @@ void regModule_Additive(int id) {
 	return;
 
 }
-
+*/
 void setPB(int bus, float v) {
 	patchBus[bus][0]= v; 
 	patchBus[bus][1]= v; 
@@ -1123,13 +1194,7 @@ void setPB(int bus, float v) {
 
 void presetPatches(unsigned char prg) {
 	switch (prg) {
-		case 0: patchIn[0][0] = 255; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 121; patchIn[2][1] = 135; patchIn[2][2] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 123; patchIn[3][1] = 136; patchIn[3][2] = 135; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 124; patchIn[4][1] = 127; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 130; patchIn[5][1] = 131; patchNote[5] = 2; patchGate[5] = 2; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 255; patchIn[7][1] = 255; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 145; patchIn[8][1] = 145; patchIn[8][2] = 255; patchIn[8][3] = 255; patchIn[8][4] = 255; patchIn[8][5] = 255; patchIn[8][6] = 255; patchIn[8][7] = 255; patchIn[8][8] = 255; patchIn[8][9] = 255; patchIn[8][10] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 120; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; 
-
-//patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 121; patchIn[2][1] = 132; patchIn[2][2] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 123; patchIn[3][1] = 133; patchIn[3][2] = 255; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 124; patchIn[4][1] = 127; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 130; patchIn[5][1] = 131; patchNote[5] = 2; patchGate[5] = 2; patchNote[6] = 2; patchGate[6] = 2; 
-			break;
-		//patchIn[0][0] = 73; patchIn[0][1] = 9; patchIn[0][2] = 12; patchIn[0][3] = 72; patchIn[0][4] = 91; patchIn[0][5] = 93; patchIn[0][6] = 5; patchIn[0][7] = 89; patchIn[0][8] = 10; patchIn[0][9] = 16; patchIn[0][10] = 7; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchIn[1][2] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 120; patchIn[2][1] = 120; patchNote[2] = 2; patchGate[2] = 2;
-			break;
-		//case 0: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 138; patchIn[11][1] = 141; patchNote[11] = 2; patchGate[11] = 2; patchNote[12] = 2; patchGate[12] = 2;
+		case 0: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 120; patchIn[4][1] = 130; patchIn[4][2] = 121; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 122; patchIn[5][1] = 130; patchIn[5][2] = 122; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 129; patchIn[6][1] = 120; patchIn[6][2] = 120; patchIn[6][3] = 123; patchIn[6][4] = 255; patchIn[6][5] = 255; patchNote[6] = 2; patchGate[6] = 1; 
 			break;
 		case 1: patchIn[0][0] = 134; patchIn[0][1] = 125; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 144; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 123; patchIn[2][1] = 134; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 122; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 0; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 120; patchIn[6][2] = 10; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 124; patchIn[7][2] = 10; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 138; patchIn[10][1] = 142; patchNote[10] = 2; patchGate[10] = 2;
 			break;
@@ -1138,6 +1203,8 @@ void presetPatches(unsigned char prg) {
 		case 3:	patchIn[0][0] = 255; patchIn[0][1] = 255; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 255; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 255; patchIn[2][1] = 255; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 255; patchIn[3][1] = 255; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 146; patchIn[6][1] = 10; patchIn[6][2] = 255; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 147; patchIn[7][1] = 10; patchIn[7][2] = 255; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 120; patchIn[10][1] = 122; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 138; patchIn[11][1] = 141; patchNote[11] = 2; patchGate[11] = 2; 
 			break;
 		case 4: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 120; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 146; patchIn[11][1] = 147; patchNote[11] = 2; patchGate[11] = 2; 
+			break;
+		case 5: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 121; patchIn[4][1] = 255; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 123; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2;
 			break;
 		default:
 			break;
@@ -1151,20 +1218,18 @@ void presetPatches(unsigned char prg) {
 // This function is called by the OpenModular
 void moduleRegistration(void) {
 	//regModule_Oscilator1(0);
-	regModule_WavetableOsc(0);
-	regModule_WavetableOsc2(1);
-	regModule_Filter1(2);
-	regModule_Filter2(3);
-	regModule_Gate2Bus(4);
-	regModule_Output(5);
-	regModule_ADSR(6);
-//	regModule_Sequencer(6);
-	regModule_LFO(7);
-	regModule_Smoothie(8);
-	regModule_SampleAndHold(9);
-	regModule_WTCrunch(10);
+	regModule_Output(0);
+	regModule_Sequencer(1);
+	regModule_WavetableOsc(2);
+	regModule_WavetableOsc2(3);
+	regModule_Filter1(4);
+	regModule_Filter2(5);
+	regModule_ADSR1(6);
+	regModule_WTCrunch(7);
+//	regModule_LFO(7);
+	regModule_SampleAndHold(8);
+	regModule_Smoothie(9);
 
-	
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
 	regModule_Smoothie(2);
@@ -1179,7 +1244,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=11;
+	numberOfModules=10;
 
 	return;
 }

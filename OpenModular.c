@@ -18,13 +18,29 @@
 
 void mainOpenModular(void);
 
+#define TEXTEDIT
+//#define TARGET_RPI
+
+
 #include "OpenModularVarsM.h"
+#ifdef TEXTEDIT
 #include "modEditor.c"
-//#include "hal_text.c"
-//#include "hal_RPi.c"
-//#include "hal_file.c"
+#endif
+
+#ifdef TARGET_RPI
+#include "hal_RPi.c"
+#endif
+
+#ifdef TEXTEDIT
 #include "hal_alsa.c"
+#endif
+
+//#include "hal_text.c"
+//#include "hal_file.c"
+
 #include "modules.c"
+
+
 
 void sendModulesInfo(void) {
 	int id,i;
@@ -267,13 +283,16 @@ void mainOpenModular(void) {
 		}
 	}
 	presetPatches(0);
-
+	
+#ifdef TEXTEDIT
 	editor();
-	printf("Enter OpenModular audio process loop\n");
+#endif
+
 	while(1) { // forever loop
+/*
 		if( MIDIin(&mididata)==1 ) {
 			parse(mididata);
-		}
+		}*/
 		if(AudioFIFOfull()==0) {
 			// Toggle bus
 			togglerIn=togglerOut;
@@ -284,7 +303,6 @@ void mainOpenModular(void) {
 				moduleRegistry[i](i);
 			}
 			AudioOut();
-		} else {
 		}
 	}
 	return; // never reached
