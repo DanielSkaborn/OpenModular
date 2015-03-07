@@ -7,9 +7,9 @@
 
 
 
-//volatile float sinustable[8193];
-volatile float wavetable[4097][3];
-volatile int tableToUse = 0;
+//float sinustable[8193];
+float wavetable[4097][3];
+int tableToUse = 0;
 
 void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	int i;
@@ -71,9 +71,9 @@ void regModule_Output(int id) {
 }
 
 void module_ADSR1(int id) {
-	volatile static int state=0;
-	volatile static unsigned char lastgate=0;
-	volatile static float d=0, signal=0, sustain=0;
+	static int state=0;
+	static unsigned char lastgate=0;
+	static float d=0, signal=0, sustain=0;
 
 	if (id==-1) { // init statics
 		state=0;
@@ -164,9 +164,9 @@ void regModule_ADSR1(int id) {
 }
 
 void module_ADSR2(int id) {
-	volatile static int state=0;
-	volatile static unsigned char lastgate=0;
-	volatile static float d=0, signal=0, sustain=0;
+	static int state=0;
+	static unsigned char lastgate=0;
+	static float d=0, signal=0, sustain=0;
 
 	if (id==-1) { // init statics
 		state=0;
@@ -384,11 +384,11 @@ void regModule_Gate2Bus(int id) {
 }
 
 void module_LFO(int id) {
-	volatile static int counter=0;
-	volatile static int countto=10;
-	volatile static int dir=0;
-	volatile static float accout=0.0;
-	volatile static float temp0,temp1;
+	static int counter=0;
+	static int countto=10;
+	static int dir=0;
+	static float accout=0.0;
+	static float temp0,temp1;
 	
 	if (id==-1) { // init statics
 		counter=0; countto=10;
@@ -441,11 +441,11 @@ void regModule_LFO(int id) {
 }
 
 void module_LFO2(int id) {
-	volatile static int counter=0;
-	volatile static int countto=10;
-	volatile static int dir=0;
-	volatile static float accout=0.0;
-	volatile static float temp0,temp1;
+	static int counter=0;
+	static int countto=10;
+	static int dir=0;
+	static float accout=0.0;
+	static float temp0,temp1;
 
 	if (id==-1) { // init statics
 		counter=0; countto=10;
@@ -497,8 +497,8 @@ void regModule_LFO2(int id) {
 }
 
 void module_Smoothie(int id) {
-	volatile static int counter=0;
-	volatile float smooth;
+	static int counter=0;
+	float smooth;
 	
 	if (id==-1) {
 		counter=0;
@@ -579,7 +579,7 @@ void regModule_Smoothie(int id) {
 }
 
 void module_SampleAndHold(int id) {
-	volatile static int counter=0;
+	static int counter=0;
 	float temp;
 
 	if (id==-1) {
@@ -617,8 +617,8 @@ void regModule_SampleAndHold(int id) {
 }
 
 void module_Sequencer(int id) {
-	volatile static int step = 0;
-	volatile static int counter = -1;
+	static int step = 0;
+	static int counter = -1;
 	
 	if (id==-1) { // init statics
 		step=0;
@@ -706,14 +706,14 @@ void module_Filter1(int id) {
 	// AIN1	 : CUTOFF FREQUENCY
 	// AIN2  : RESONANCE
 
-	volatile static float lastcin0 = -2;
-	volatile static float lastcin1 = -2;
+	static float lastcin0 = -2;
+	static float lastcin1 = -2;
 	
-	volatile static float frequency=0, resonance=0;
-	volatile static float freqinhz=0;
-	volatile static float f=0, p=0, q=0;             //filter coefficients
-	volatile static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
-	volatile static float t1=0, t2=0;              //temporary buffers
+	static float frequency=0, resonance=0;
+	static float freqinhz=0;
+	static float f=0, p=0, q=0;             //filter coefficients
+	static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
+	static float t1=0, t2=0;              //temporary buffers
 	
 	float temp;
 	
@@ -790,16 +790,16 @@ void module_Filter2(int id) {
 	// AIN1	 : CUTOFF FREQUENCY
 	// AIN2  : RESONANCE
 
-	volatile static float lastcin0 = -2;
-	volatile static float lastcin1 = -2;
+	static float lastcin0 = -2;
+	static float lastcin1 = -2;
 	
-	volatile static float frequency=0, resonance=0;
-	volatile static float freqinhz=0;
-	volatile static float f=0, p=0, q=0;             //filter coefficients
-	volatile static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
-	volatile static float t1=0, t2=0;              //temporary buffers
+	static float frequency=0, resonance=0;
+	static float freqinhz=0;
+	static float f=0, p=0, q=0;             //filter coefficients
+	static float in=0, b0=0, b1=0, b2=0, b3=0, b4=0;  //filter buffers (beware denormals!)
+	static float t1=0, t2=0;              //temporary buffers
 	
-	volatile static float temp;
+	static float temp;
 
 	if (id == -1) { // init statics
 		lastcin0 = -2; lastcin1 = -2; frequency=0.0; resonance=0.0; freqinhz=0.0;
@@ -858,13 +858,13 @@ void regModule_Filter2(int id) {
 }
 
 void module_Oscilator1(int id) {
-	volatile static float freq=0, toneFreq=0;
-	volatile static float d=0;
-	volatile static float pw=0;
-	volatile static unsigned char lastnote=0;
-	volatile static float temp=0;
+	static float freq=0, toneFreq=0;
+	static float d=0;
+	static float pw=0;
+	static unsigned char lastnote=0;
+	static float temp=0;
 	
-	volatile float tempsq;
+	float tempsq;
 	int i;
 
 	if (id == -1) { // init statics
@@ -940,10 +940,10 @@ void module_Oscilator2(int id) {
 	// AIN1  : FINETUNE
 	// NOTE  :
 
-	volatile static float freq=0, toneFreq=0;
-	volatile static float d=0;
-	volatile static float pw=0;
-	volatile static unsigned char lastnote=0;
+	static float freq=0, toneFreq=0;
+	static float d=0;
+	static float pw=0;
+	static unsigned char lastnote=0;
 	static float temp=0;
 	
 	int i;
@@ -1014,9 +1014,9 @@ void regModule_Oscilator2(int id) {
 void module_WavetableOsc(int id) {
 	
 	static int switcher=0;
-	volatile static unsigned char lastnote=0;
+	static unsigned char lastnote=0;
 	static float toneFreq=20.1;
-	volatile static float phase = 0.0;
+	static float phase = 0.0;
 	float freq;
 	float temp;
 	unsigned char lowbit;
@@ -1077,9 +1077,9 @@ void regModule_WavetableOsc(int id) {
 
 void module_WavetableOsc2(int id) {
 	static int switcher=0;
-	volatile static unsigned char lastnote=0;
+	static unsigned char lastnote=0;
 	static float toneFreq=20.1;
-	volatile static float phase = 0.0;
+	static float phase = 0.0;
 
 	float freq;
 	float temp;
@@ -1140,11 +1140,11 @@ void regModule_WavetableOsc2(int id) {
 /*
 void module_Additive(int id) {
 	
-	volatile static unsigned char lastnote=0;
+	static unsigned char lastnote=0;
 	int i;
 	static float toneFreq=20.1, out=0.0;
 	float freq;
-	volatile static float phase[20] = {0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, };
+	static float phase[20] = {0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, };
 	
 	if (NOTE != lastnote) {
 		lastnote=NOTE;
@@ -1194,7 +1194,9 @@ void setPB(int bus, float v) {
 
 void presetPatches(unsigned char prg) {
 	switch (prg) {
-		case 0: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 120; patchIn[4][1] = 130; patchIn[4][2] = 121; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 122; patchIn[5][1] = 130; patchIn[5][2] = 122; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 129; patchIn[6][1] = 120; patchIn[6][2] = 120; patchIn[6][3] = 123; patchIn[6][4] = 255; patchIn[6][5] = 255; patchNote[6] = 2; patchGate[6] = 1; 
+		case 0: patchIn[0][0] = 121; patchIn[0][1] = 123; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 1; patchGate[2] = 2; patchNote[3] = 0; patchGate[3] = 2;
+			break;
+		case 8:	patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchIn[2][1] = 255; patchIn[2][2] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchIn[3][1] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 120; patchIn[4][1] = 134; patchIn[4][2] = 10; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 122; patchIn[5][1] = 135; patchIn[5][2] = 10; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 129; patchIn[6][1] = 136; patchNote[6] = 2; patchGate[6] = 1; patchIn[7][0] = 122; patchIn[7][1] = 255; patchIn[7][2] = 6; patchIn[7][3] = 130; patchIn[7][4] = 130; patchIn[7][5] = 255; patchIn[7][6] = 255; patchIn[7][7] = 255; patchIn[7][8] = 255; patchIn[7][9] = 255; patchIn[7][10] = 255; patchNote[7] = 2; patchGate[7] = 2; 
 			break;
 		case 1: patchIn[0][0] = 134; patchIn[0][1] = 125; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 255; patchIn[1][1] = 144; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 123; patchIn[2][1] = 134; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 122; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 0; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 121; patchIn[6][1] = 120; patchIn[6][2] = 10; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 124; patchIn[7][2] = 10; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 138; patchIn[10][1] = 142; patchNote[10] = 2; patchGate[10] = 2;
 			break;
@@ -1205,6 +1207,10 @@ void presetPatches(unsigned char prg) {
 		case 4: patchIn[0][0] = 144; patchIn[0][1] = 200; patchNote[0] = 0; patchGate[0] = 2; patchIn[1][0] = 134; patchIn[1][1] = 200; patchNote[1] = 1; patchGate[1] = 2; patchIn[2][0] = 134; patchIn[2][1] = 140; patchIn[2][2] = 255; patchIn[2][3] = 255; patchIn[2][4] = 255; patchIn[2][5] = 255; patchIn[2][6] = 255; patchIn[2][7] = 255; patchIn[2][8] = 255; patchIn[2][9] = 255; patchIn[2][10] = 255; patchNote[2] = 2; patchGate[2] = 2; patchIn[3][0] = 120; patchIn[3][1] = 12; patchNote[3] = 2; patchGate[3] = 2; patchIn[4][0] = 255; patchIn[4][1] = 255; patchIn[4][2] = 255; patchIn[4][3] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 255; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 120; patchIn[6][1] = 10; patchIn[6][2] = 1; patchNote[6] = 2; patchGate[6] = 2; patchIn[7][0] = 122; patchIn[7][1] = 148; patchIn[7][2] = 1; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 255; patchIn[8][1] = 255; patchNote[8] = 2; patchGate[8] = 2; patchIn[9][0] = 255; patchIn[9][1] = 255; patchNote[9] = 2; patchGate[9] = 2; patchIn[10][0] = 121; patchIn[10][1] = 123; patchNote[10] = 2; patchGate[10] = 2; patchIn[11][0] = 146; patchIn[11][1] = 147; patchNote[11] = 2; patchGate[11] = 2; 
 			break;
 		case 5: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 121; patchIn[4][1] = 255; patchIn[4][2] = 255; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 123; patchIn[5][1] = 255; patchIn[5][2] = 255; patchNote[5] = 2; patchGate[5] = 2;
+			break;
+		case 6: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 120; patchIn[4][1] = 130; patchIn[4][2] = 121; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 122; patchIn[5][1] = 130; patchIn[5][2] = 122; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 129; patchIn[6][1] = 120; patchIn[6][2] = 120; patchIn[6][3] = 123; patchIn[6][4] = 255; patchIn[6][5] = 255; patchNote[6] = 2; patchGate[6] = 1; 
+			break;
+		case 7: patchIn[0][0] = 124; patchIn[0][1] = 127; patchNote[0] = 0; patchGate[0] = 2; patchNote[1] = 0; patchGate[1] = 2; patchIn[2][0] = 255; patchNote[2] = 0; patchGate[2] = 2; patchIn[3][0] = 255; patchNote[3] = 1; patchGate[3] = 2; patchIn[4][0] = 121; patchIn[4][1] = 134; patchIn[4][2] = 10; patchNote[4] = 2; patchGate[4] = 2; patchIn[5][0] = 123; patchIn[5][1] = 135; patchIn[5][2] = 10; patchNote[5] = 2; patchGate[5] = 2; patchIn[6][0] = 129; patchIn[6][1] = 136; patchIn[6][2] = 120; patchIn[6][3] = 123; patchIn[6][4] = 255; patchIn[6][5] = 255; patchNote[6] = 2; patchGate[6] = 1; patchIn[7][0] = 122; patchIn[7][1] = 255; patchNote[7] = 2; patchGate[7] = 2; patchIn[8][0] = 133; patchIn[8][1] = 133; patchIn[8][2] = 125; patchIn[8][3] = 255; patchIn[8][4] = 255; patchIn[8][5] = 255; patchIn[8][6] = 255; patchIn[8][7] = 255; patchIn[8][8] = 255; patchIn[8][9] = 255; patchIn[8][10] = 134; patchNote[8] = 2; patchGate[8] = 2; 
 			break;
 		default:
 			break;
@@ -1219,16 +1225,18 @@ void presetPatches(unsigned char prg) {
 void moduleRegistration(void) {
 	//regModule_Oscilator1(0);
 	regModule_Output(0);
-	regModule_Sequencer(1);
-	regModule_WavetableOsc(2);
-	regModule_WavetableOsc2(3);
-	regModule_Filter1(4);
-	regModule_Filter2(5);
-	regModule_ADSR1(6);
-	regModule_WTCrunch(7);
+	regModule_Sequencer(3);
+//	regModule_Oscilator1(2);
+//	regModule_Oscilator2(1);
+	regModule_WavetableOsc(1);
+	regModule_WavetableOsc2(2);
+//	regModule_Filter1(4);
+//	regModule_Filter2(5);
+//	regModule_ADSR1(6);
+//	regModule_WTCrunch(7);
 //	regModule_LFO(7);
-	regModule_SampleAndHold(8);
-	regModule_Smoothie(9);
+//	regModule_SampleAndHold(6);
+//	regModule_Smoothie(7);
 
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
@@ -1244,7 +1252,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=10;
+	numberOfModules=4;
 
 	return;
 }

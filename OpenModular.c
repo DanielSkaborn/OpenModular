@@ -18,7 +18,7 @@
 
 void mainOpenModular(void);
 
-#define TEXTEDIT
+//#define TEXTEDIT
 //#define TARGET_RPI
 
 
@@ -27,11 +27,15 @@ void mainOpenModular(void);
 #include "modEditor.c"
 #endif
 
-#ifdef TARGET_RPI
+#ifdef BAREMETAL_RPI
 #include "hal_RPi.c"
 #endif
 
-#ifdef TEXTEDIT
+#ifdef ALSA_RPI
+#include "hal_RPi_alsa.c"
+#endif
+
+#ifdef ALSA
 #include "hal_alsa.c"
 #endif
 

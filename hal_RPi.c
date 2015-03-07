@@ -160,8 +160,10 @@ void AudioOut(void) {
 	return;
 }
 
+	uint32_t controlRegister;
+
 int main(void) {
-//	asm volatile("ldr sp, =(128 * (1024 * 1024))\n");
+	
 	asm volatile("mov sp, #0x8000\n");                 
 	asm volatile("mrc p15, 0, r0, c1, c0, 2\n");
 	asm volatile("orr r0, r0, #0x300000\n");             // single precision 
@@ -169,6 +171,11 @@ int main(void) {
 	asm volatile("mcr p15, 0, r0, c1, c0, 2\n");
 	asm volatile("mov r0, #0x40000000\n");               // Enable FPU 
 	asm volatile("fmxr fpexc,r0\n");
+
+	asm volatile ("MRC p15, 0, %0, c1, c0, 0" : "=r" (controlRegister)); // enable cache
+	controlRegister|=0x1800; 
+	asm volatile ("MCR p15, 0, %0, c1, c0, 0" :: "r" (controlRegister));
+
 	
 
 	/* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
