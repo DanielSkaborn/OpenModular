@@ -1225,17 +1225,17 @@ void presetPatches(unsigned char prg) {
 void moduleRegistration(void) {
 	//regModule_Oscilator1(0);
 	regModule_Output(0);
-	regModule_Sequencer(3);
 //	regModule_Oscilator1(2);
 //	regModule_Oscilator2(1);
 	regModule_WavetableOsc(1);
 	regModule_WavetableOsc2(2);
-//	regModule_Filter1(4);
-//	regModule_Filter2(5);
+	regModule_Sequencer(3);
+	regModule_Filter1(4);
+	regModule_Filter2(5);
 //	regModule_ADSR1(6);
 //	regModule_WTCrunch(7);
-//	regModule_LFO(7);
-//	regModule_SampleAndHold(6);
+	regModule_LFO(7);
+	regModule_SampleAndHold(6);
 //	regModule_Smoothie(7);
 
 /*	regModule_Oscilator1(0);
