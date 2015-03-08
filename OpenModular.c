@@ -219,7 +219,7 @@ void parse(unsigned char inbuf){
 			break;
 
 		case 7: // Program change
-			//preset_program = inbuf;
+			loadPatch(inbuf);
 			mps=0;
 			break;
 

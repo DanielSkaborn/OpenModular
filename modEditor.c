@@ -6,7 +6,7 @@ void printMods(void);
 void *patchtexteditor(void *arg);
 
 void storePatch(void);
-
+void loadPatch(int prg);
 void clearPatches(void);
 
 void printModOuts(void) {
@@ -25,7 +25,7 @@ void printModOuts(void) {
 			}
 	}
 	printf("\n\n");
-	//printf("\n\n BUS ID module   OUT   > CONNECTED TO\n");
+	
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
 			printf(" %02d ",patchOut[i][ii]); // patchnumber
@@ -39,7 +39,7 @@ void printModOuts(void) {
 			printf("\n");
 		}
 	}
-	printf("\n 996 Gate\n 997 Note\n 998 Clear\n 999 Save\n 1000+ Set static value to bus\n");
+	printf("\n 995 Gate\n 996 Note\n 997 Clear\n 998 Load\n 999 Save\n 1000+ Set static value to bus\n");
 }
 
 void printConnectsTo(int bus) {
@@ -108,9 +108,14 @@ void *patchtexteditor(void *arg) {
 		printf("\nPB> ");
 		scanf("%d",&p);
 		if ( p > 799 ) {
-			if (p == 998) clearPatches();
+			if (p == 997) clearPatches();
+			if (p == 998) {
+				printf("\nPatchNumber to load> ");
+				scanf("%d",&in);
+				loadPatch(in);
+			}
 			if (p == 999) storePatch();
-			if (p == 997) {
+			if (p == 996) {
 				printMods();
 				printf("\nNote bus assign\nID> ");
 				scanf("%d",&id);
@@ -121,7 +126,7 @@ void *patchtexteditor(void *arg) {
 					scanf("%d",&p);
 					if (!(p>2)) patchNote[id]=p;
 				}
-			} else if (p==996) {
+			} else if (p==995) {
 				printMods();
 				printf("\nID> ");
 				scanf("%d",&id);
