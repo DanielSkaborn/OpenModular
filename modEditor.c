@@ -5,6 +5,8 @@ void printModIns(int id);
 void printMods(void);
 void *patchtexteditor(void *arg);
 
+void storePatch(void);
+
 void clearPatches(void);
 
 void printModOuts(void) {
@@ -37,7 +39,7 @@ void printModOuts(void) {
 			printf("\n");
 		}
 	}
-	printf("\n 998 Clear\n 999 Save\n1000 Note\n1001 Gate\n");
+	printf("\n 996 Gate\n 997 Note\n 998 Clear\n 999 Save\n 1000+ Set static value to bus\n");
 }
 
 void printConnectsTo(int bus) {
@@ -105,35 +107,44 @@ void *patchtexteditor(void *arg) {
 		
 		printf("\nPB> ");
 		scanf("%d",&p);
-		if (p == 998) clearPatches();
-		if (p == 999) savePatch();
-		if ( p > 999 ) {
-			if (p==1000) {
+		if ( p > 799 ) {
+			if (p == 998) clearPatches();
+			if (p == 999) storePatch();
+			if (p == 997) {
 				printMods();
-				printf("\nID> ");
+				printf("\nNote bus assign\nID> ");
 				scanf("%d",&id);
 				if ( id > numberOfModules ) {
-					printf("\n Invalid module ID, out is of range.\n");
+					printf("\n Invalid module ID, out of range.\n");
 				} else {
-					printf("\nNB> ");
+					printf("\nBus (0=first, 1=sec, 2=no\nNB> ");
 					scanf("%d",&p);
 					if (!(p>2)) patchNote[id]=p;
 				}
-			} else if (p==1001) {
+			} else if (p==996) {
 				printMods();
 				printf("\nID> ");
 				scanf("%d",&id);
 				if ( id > numberOfModules ) {
-					printf("\n Invalid module ID, out is of range.\n");
+					printf("\n Invalid module ID, out of range.\n");
 				} else {
 					printf("\nGB> ");
 					scanf("%d",&p);
 					if (!(p>2)) patchGate[id]=p;
 				}
 			}
+			if ((p > 999) && (p < 1121)) {
+				if ((p-1000<NOPATCHBUS) && (p>1000)) {
+				printf("\nSet static value to bus %03d (-100 to 100) > ", p-1000);
+				scanf("%d",&id);
+				patchBus[p-1000][1] = patchBus[p-1000][0] = (float)(id)/100.0;
+				} else {
+					printf("\n Invalid bus number.\n");
+				}
+			}
 		}
 		else if ( p > NOPATCHBUS ) {
-			printf("\n Invalid patchbus out is of range\n");
+			printf("\n Invalid patchbus, out of range\n");
 		} else {
 			printMods();
 			printf("\nID> ");

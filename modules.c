@@ -383,7 +383,7 @@ void regModule_Gate2Bus(int id) {
 	return;
 }
 
-void module_LFO(int id) {
+void module_LFO1(int id) {
 	static int counter=0;
 	static int countto=10;
 	static int dir=0;
@@ -424,14 +424,14 @@ void module_LFO(int id) {
 	AOUT0=accout-1.0;
 	return;
 }
-void regModule_LFO(int id) {
-	moduleRegistry[id] = module_LFO;
-	module_LFO(-1); // init
+void regModule_LFO1(int id) {
+	moduleRegistry[id] = module_LFO1;
+	module_LFO1(-1); // init
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
 	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
 //               "        \0";
-	char name[9]="LFOTRI  \0";
+	char name[9]="LFOTRI1 \0";
 	
 	modIns[id]     = 2;
 	modOuts[id]    = 1;
@@ -1011,7 +1011,7 @@ void regModule_Oscilator2(int id) {
 
 }
 
-void module_WavetableOsc(int id) {
+void module_WavetableOsc1(int id) {
 	
 	static int switcher=0;
 	static unsigned char lastnote=0;
@@ -1051,8 +1051,8 @@ void module_WavetableOsc(int id) {
 
 void regModule_WavetableOsc(int id) {
 	int i;
-	moduleRegistry[id] = module_WavetableOsc;
-	module_WavetableOsc(-1); // init
+	moduleRegistry[id] = module_WavetableOsc1;
+	module_WavetableOsc1(-1); // init
 	for (i=0;i<2048;i++)
 		wavetable[i][0] = -1.0;
 	for (i=2049;i<4096;i++)
@@ -1065,7 +1065,7 @@ void regModule_WavetableOsc(int id) {
 	char inNames[4*MAXIN+1]   = "TUNE                                                            \0";
 	char outNames[4*MAXOUT+1] = "OUT 8BIT                                                        \0";
 //               "        \0";
-	char name[9]="WaveTabl\0";
+	char name[9]="WaveTab1\0";
 	
 	modIns[id]     = 1;
 	modOuts[id]    = 2;
@@ -1128,7 +1128,7 @@ void regModule_WavetableOsc2(int id) {
 	char inNames[4*MAXIN+1]   = "TUNE                                                            \0";
 	char outNames[4*MAXOUT+1] = "OUT 8BIT                                                        \0";
 //               "        \0";
-	char name[9]="WaveTabl\0";
+	char name[9]="WaveTab2\0";
 	
 	modIns[id]     = 1;
 	modOuts[id]    = 2;
@@ -1234,7 +1234,7 @@ void moduleRegistration(void) {
 	regModule_Filter2(5);
 //	regModule_ADSR1(6);
 //	regModule_WTCrunch(7);
-	regModule_LFO(7);
+	regModule_LFO1(7);
 	regModule_SampleAndHold(6);
 //	regModule_Smoothie(7);
 

@@ -79,6 +79,8 @@ unsigned char	modOuts[MAXMODS];
 unsigned char	modInsName[MAXMODS][4*MAXIN+1];
 unsigned char	modOutsName[MAXMODS][4*MAXOUT+1];
 
+int filecounter;
+
 int 	numberOfModules;
 
 float noteToFreqLUT[128];

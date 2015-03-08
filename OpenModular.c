@@ -44,7 +44,64 @@ void mainOpenModular(void);
 
 #include "modules.c"
 
+FILE *infil;
+FILE *utfil;
 
+void storePatch(void) {
+	char tmp[100];
+	
+	infil=fopen("counter.cnt","r");
+	if (infil==NULL) {
+		printf("No counterfile, will start from program-zero.\n");
+		filecounter=0;
+	} else {
+		fscanf(infil, "%d", &filecounter);
+		fclose(infil);
+	}
+
+	sprintf(tmp, "%03d.omo", filecounter);
+	utfil = fopen(tmp,"wb");
+	fwrite(patchBus, 4, NOPATCHBUS*2, utfil);
+	fwrite(patchIn, 4, MAXMODS*MAXIN, utfil);
+	fwrite(patchOut, 4, MAXMODS*MAXOUT, utfil);
+	fwrite(patchGate, 4, MAXMODS, utfil);
+	fwrite(patchNote, 4, MAXMODS, utfil);
+	fclose(utfil);
+
+	filecounter++;
+	utfil = fopen("counter.cnt","w");
+	fprintf(utfil, "%d\n",filecounter);
+	fclose(utfil);
+	printf("Store completed\n");
+	return;
+}
+
+void loadPatch(int prg) {
+	char tmp[100];
+	infil=fopen("counter.cnt","rb");
+	if (infil==NULL) {
+		printf("No counterfile.\n");
+		filecounter=0;
+		return;
+	} else {
+		fscanf(infil, "%d", &filecounter);
+		fclose(infil);
+	}
+
+	if (prg > filecounter) {
+		printf("No stored patch at program %d\n",prg);
+	} else {
+		sprintf(tmp, "%03d.omo", prg);
+		infil = fopen(tmp,"rb");
+		fread(patchBus, 4, NOPATCHBUS*2, infil);
+		fread(patchIn, 4, MAXMODS*MAXIN, infil);
+		fread(patchOut, 4, MAXMODS*MAXOUT, infil);
+		fread(patchGate, 4, MAXMODS, infil);
+		fread(patchNote, 4, MAXMODS, infil);
+		fclose(infil);
+	}
+	return;
+}
 
 void sendModulesInfo(void) {
 	int id,i;
@@ -279,24 +336,25 @@ void mainOpenModular(void) {
 	clearBusses();
 	
 	moduleRegistration();
-		
+
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
 			patchOut[i][ii]=n;
 			n++;
 		}
 	}
-	presetPatches(0);
+
+	loadPatch(0);
 	
 #ifdef TEXTEDIT
 	editor();
 #endif
 
 	while(1) { // forever loop
-/*
+
 		if( MIDIin(&mididata)==1 ) {
 			parse(mididata);
-		}*/
+		}
 		if(AudioFIFOfull()==0) {
 			// Toggle bus
 			togglerIn=togglerOut;
