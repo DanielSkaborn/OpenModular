@@ -27,8 +27,8 @@ pthread_t patchconnector;
 snd_output_t *output = NULL;
 snd_pcm_sframes_t frames;
 
-int16_t audiobuffer1[256]; 
-int16_t audiobuffer2[256]; 
+int16_t audiobuffer1[256];
+int16_t audiobuffer2[256];
 volatile unsigned char activebuffer = 0;
 volatile unsigned char bufferfull = 0;
 snd_pcm_t *handle;

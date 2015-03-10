@@ -334,7 +334,7 @@ void mainOpenModular(void) {
 
 	clearPatches();
 	clearBusses();
-	
+	loadPatch(0);
 	moduleRegistration();
 
 	for (i=0;i<numberOfModules;i++) {
@@ -343,8 +343,6 @@ void mainOpenModular(void) {
 			n++;
 		}
 	}
-
-	loadPatch(0);
 	
 #ifdef TEXTEDIT
 	editor();

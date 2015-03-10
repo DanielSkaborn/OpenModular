@@ -99,7 +99,7 @@ void module_ADSR1(int id) {
 				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
 			else
 				d=0.3;
-			signal = 0.0f;
+//			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -140,7 +140,7 @@ void module_ADSR1(int id) {
 	} //switch
 	lastgate = GATE;
 	AOUT0=signal;
-	
+
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -149,7 +149,7 @@ void module_ADSR1(int id) {
 void regModule_ADSR1(int id) {
 	moduleRegistry[id] = module_ADSR1;
 	module_ADSR1(-1); // init
-	
+
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
@@ -192,7 +192,7 @@ void module_ADSR2(int id) {
 				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
 			else
 				d=0.3;
-			signal = 0.0f;
+//			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -233,7 +233,7 @@ void module_ADSR2(int id) {
 	} //switch
 	lastgate = GATE;
 	AOUT0=signal;
-	
+
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -242,11 +242,11 @@ void module_ADSR2(int id) {
 void regModule_ADSR2(int id) {
 	moduleRegistry[id] = module_ADSR2;
 	module_ADSR2(-1); // init
-	
-//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+
+//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
-//               "        \0";
+//                   "        \0";
 	char name[9]="ADSR2   \0";
 
 	modIns[id]     = 6;
@@ -254,6 +254,46 @@ void regModule_ADSR2(int id) {
 
 	copymodstrings(id, name, inNames, outNames);
 	return;
+}
+
+void module_Delay(int id) {
+	static float delaymem[SAMPLERATE]; // 1s of delay memory
+	static int storepointer, playbackpointer;
+	static float storepointerf;
+	if (id==-1) {
+		storepointerf=0.0;
+	}
+
+	storepointerf += ((AIN2+1.0f)/2.0f);
+	if (storepointerf > SAMPLERATEF) storepointerf-=SAMPLERATEF;
+//	storepointer++;;
+	storepointer = (int)(storepointerf);
+//	if (storepointer == SAMPLERATE) storepointer = 0;
+
+	delaymem[storepointer] = AIN0;
+
+	playbackpointer = storepointer - (AIN1+1) *SAMPLERATE/2;
+	if (playbackpointer < 0) playbackpointer += SAMPLERATE;
+
+	AOUT0 = delaymem[playbackpointer];
+	return;
+}
+
+void regModule_Delay(int id) {
+        moduleRegistry[id] = module_Delay;
+        module_Delay(-1); // init
+
+//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+        char inNames[4*MAXIN+1]   = "IN  TIMESLOW                                                    \0";
+        char outNames[4*MAXOUT+1] = "OUT                                                             \0";
+//                   "        \0";
+        char name[9]="DELAY   \0";
+
+        modIns[id]     = 3;
+        modOuts[id]    = 1;
+
+        copymodstrings(id, name, inNames, outNames);
+        return;
 }
 
 void module_WTCrunch(int id) {
@@ -1049,7 +1089,7 @@ void module_WavetableOsc1(int id) {
 	return;
 }
 
-void regModule_WavetableOsc(int id) {
+void regModule_WavetableOsc1(int id) {
 	int i;
 	moduleRegistry[id] = module_WavetableOsc1;
 	module_WavetableOsc1(-1); // init
@@ -1225,18 +1265,20 @@ void presetPatches(unsigned char prg) {
 void moduleRegistration(void) {
 	//regModule_Oscilator1(0);
 	regModule_Output(0);
-//	regModule_Oscilator1(2);
-//	regModule_Oscilator2(1);
-	regModule_WavetableOsc(1);
-	regModule_WavetableOsc2(2);
-	regModule_Sequencer(3);
+	regModule_Oscilator1(1);
+	regModule_Oscilator2(2);
+	regModule_WavetableOsc1(3);
 	regModule_Filter1(4);
 	regModule_Filter2(5);
-//	regModule_ADSR1(6);
-//	regModule_WTCrunch(7);
-	regModule_LFO1(7);
-	regModule_SampleAndHold(6);
-//	regModule_Smoothie(7);
+	regModule_ADSR1(6);
+	regModule_ADSR2(7);
+	regModule_WTCrunch(8);
+	regModule_LFO1(9);
+	regModule_LFO2(10);
+	regModule_SampleAndHold(11);
+	regModule_Smoothie(12);
+	regModule_Gain(13);
+	regModule_Delay(14);
 
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
@@ -1252,7 +1294,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=4;
+	numberOfModules=15;
 
 	return;
 }
