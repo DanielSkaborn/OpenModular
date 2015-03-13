@@ -499,81 +499,65 @@ void regModule_LFO2(int id) {
 
 void module_Smoothie(int id) {
 	static int counter=0;
-	float smooth;
-	
+	static float smooth, laout0, laout1, laout2, laout3;
 	if (id==-1) {
-		counter=0;
-		smooth=0.0;
+		laout0 = 0.0;
+		laout1 = 0.0;
+		laout2 = 0.0;
+		laout3 = 0.0;
+		smooth = 0.0;
+		counter = 0;
 		return;
 	}
 	
 	counter++;
-	if (counter>50) counter=0;
+	if (counter>201) counter=0;
 	switch (counter) {
 		case 0:
-			smooth = AIN10;
-			if ( smooth < -1.0 ) smooth =-0.9;
-			if ( smooth >  1.0 ) smooth =1;
-			smooth += 1.0;
-			smooth /= 127.0;
+			smooth = AIN4;
+			if ( smooth < 0   ) smooth = - smooth;
+			if ( smooth > 1.0 ) smooth = 1.0;
+			smooth /= 255.0;
 			break;
-		case 1:
-			if ( AIN0 > AOUT0 ) AOUT0++;
-			if ( AIN0 < AOUT0 ) AOUT0--;
+		case 50:
+			if ( AIN0 > laout0 ) AOUT0 = laout0 + smooth;
+			if ( AIN0 < laout0 ) AOUT0 = laout0 - smooth;
+//			if (laout0!=AOUT0) printf("%f %f \n",laout0,smooth);
+			laout0 = AOUT0;
 			break;
-		case 2:
-			if ( AIN1 > AOUT1 ) AOUT1++;
-			if ( AIN1 < AOUT1 ) AOUT1--;
+		case 100:
+			if ( AIN1 > laout1 ) AOUT1 = laout1 + smooth;
+			if ( AIN1 < laout1 ) AOUT1 = laout1 - smooth;
+			laout1 = AOUT1;
 			break;
-		case 3:
-			if ( AIN2 > AOUT2 ) AOUT2++;
-			if ( AIN2 < AOUT2 ) AOUT2--;
+		case 150:
+			if ( AIN2 > laout2 ) AOUT2 = laout2 + smooth;
+			if ( AIN2 < laout2 ) AOUT2 = laout2 - smooth;
+			laout2 = AOUT2;
 			break;
-		case 4:
-			if ( AIN3 > AOUT3 ) AOUT3++;
-			if ( AIN3 < AOUT3 ) AOUT3--;
-			break;
-		case 5:
-			if ( AIN4 > AOUT4 ) AOUT4++;
-			if ( AIN4 < AOUT4 ) AOUT4--;
-			break;
-		case 6:
-			if ( AIN5 > AOUT5 ) AOUT5++;
-			if ( AIN5 < AOUT5 ) AOUT5--;
-			break;
-		case 7:
-			if ( AIN6 > AOUT6 ) AOUT6++;
-			if ( AIN6 < AOUT6 ) AOUT6--;
-			break;
-		case 8:
-			if ( AIN7 > AOUT7 ) AOUT7++;
-			if ( AIN7 < AOUT7 ) AOUT7--;
-			break;
-		case 9:
-			if ( AIN8 > AOUT8 ) AOUT8++;
-			if ( AIN8 < AOUT8 ) AOUT8--;
-			break;
-		case 10:
-			if ( AIN9 > AOUT9 ) AOUT9++;
-			if ( AIN9 < AOUT9 ) AOUT9--;
+		case 200:
+			if ( AIN3 > laout3 ) AOUT3 = laout3 + smooth;
+			if ( AIN3 < laout3 ) AOUT3 = laout3 - smooth;
+			laout3 = AOUT3;
 			break;
 		default:
 			break;
 	}
-	
+
 	return;
 }
+
 void regModule_Smoothie(int id) {
 	moduleRegistry[id] = module_Smoothie;
 	module_Smoothie(-1); // init
-//                                      "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 IN4 IN5 IN6 IN7 IN8 IN9 SMTH                    \0";
-	char outNames[4*MAXOUT+1] = "OUT0OUT1OUT2OUT3OUT4OUT5OUT6OUT7OUT8OUT9                        \0";
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 SMTH                                            \0";
+	char outNames[4*MAXOUT+1] = "OUT0OUT1OUT2OUT3                                                \0";
 //               "        \0";
 	char name[9]="SMOOTHIE\0";
 	
-	modIns[id]     = 11;
-	modOuts[id]    = 10;
+	modIns[id]     = 5;
+	modOuts[id]    = 4;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;

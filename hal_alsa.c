@@ -12,8 +12,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define SAMPLERATE		44100
-#define SAMPLERATEF		44100.0f
+#define SAMPLERATE		48000
+#define SAMPLERATEF		48000.0f
 
 #define MIDIDEVICE		"/dev/snd/midiC1D0"
 #define ALSADEVICE      "plughw:2,0"
