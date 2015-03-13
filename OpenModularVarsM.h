@@ -6,7 +6,7 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
-#define MAXMODS		16
+#define MAXMODS		32
 #define MAXIN		16
 #define MAXOUT		16
 #define NOPATCHBUS 256

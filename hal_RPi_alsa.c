@@ -16,6 +16,8 @@
 #include <errno.h>
 
 #define UART_BASE   0x20201000
+#define GPIO_BASE   0x20200000
+
 #define BLOCK_SIZE   4096
 
 #define SAMPLERATE		44100
@@ -24,9 +26,6 @@
 #define MIDIDEVICE		"/dev/ttyAMA0"
 //"/dev/snd/midiC1D0"
 #define ALSADEVICE      "plughw:0,1"
-
-//int MIDIin_d;
-//int MIDIout_d;
 
 int MIDI_fd;
 int AUDIOout_d;
@@ -62,83 +61,69 @@ void MIDI_RPi_init(void) { // this opens the UART and tweeks the baudrate to MID
        
     MIDI_fd = open( MIDIDEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK );
 
-    if( MIDI_fd > 0 ) // set the baud rate and other configurations
-    {
-       tcgetattr( MIDI_fd, &termios_p );
+	if( MIDI_fd > 0 ) { // set the baud rate and other configurations
+		tcgetattr( MIDI_fd, &termios_p );
+		termios_p.c_lflag &= ~ISIG;      // no signals
+		termios_p.c_lflag &= ~ICANON;   // no canonical mode
+		termios_p.c_lflag &= ~ECHO;   // no echo input
+		termios_p.c_lflag &= ~NOFLSH;   // no flushing on SIGINT
+		termios_p.c_lflag &= ~IEXTEN;   // no input processing
+		termios_p.c_cc[VMIN] = 0;
+		termios_p.c_cc[VTIME] = 0;
+		tcsetattr( MIDI_fd, TCSANOW, &termios_p );
 
-       termios_p.c_lflag &= ~ISIG;      // no signals
-       termios_p.c_lflag &= ~ICANON;   // no canonical mode
-       termios_p.c_lflag &= ~ECHO;   // no echo input
-       termios_p.c_lflag &= ~NOFLSH;   // no flushing on SIGINT
-       termios_p.c_lflag &= ~IEXTEN;   // no input processing
-       
-       termios_p.c_cc[VMIN] = 0;
-       termios_p.c_cc[VTIME] = 0;
-          
-       tcsetattr( MIDI_fd, TCSANOW, &termios_p );
+		// Now set the uart baud rate divisors
+		if( ( mem_fd = open( "/dev/mem", O_RDWR | O_SYNC ) ) < 0 ) {
+			fprintf( stdout, "can't open /dev/mem for mmap(). Did you use 'sudo' ?\n" );
+			return;
+		}
+		uart_map = mmap( NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, UART_BASE );
+		close( mem_fd );
 
-       // Now set the uart baud rate divisors
-       if( ( mem_fd = open( "/dev/mem", O_RDWR | O_SYNC ) ) < 0 )
-       {
-          fprintf( stdout, "can't open /dev/mem for mmap(). Did you use 'sudo' ?\n" );
-          return;
-       }
+		if( uart_map == MAP_FAILED ) {
+			errsv = errno;
+			fprintf( stdout,"uart mmap failed\n" );
+			fprintf( stdout, "error %d %s\n", errsv, strerror( errsv ) );
+		} else {
+			uart = (volatile unsigned*)uart_map;
+			UARTFR = (void*)( (uint32_t)uart + 0x18 );
+			IBRD = (void*)( (uint32_t)uart + 0x24 );
+			FBRD = (void*)( (uint32_t)uart + 0x28 );
+			LCRH = (void*)( (uint32_t)uart + 0x2C );
+			UARTCR = (void*)( (uint32_t)uart + 0x30 );
 
-       uart_map = mmap( NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, UART_BASE );
+			// first, disable the uart and flush the fifos
+			brd = 0x0B00;
+			memcpy( UARTCR, &brd, 4 );
+			// check for completion of any tx/rx
+			memcpy( &brd, UARTFR, 4 );
+			while( brd & 0x08 ) {
+				usleep( 1 );
+				memcpy( &brd, UARTFR, 4 );
+			}
 
-       close( mem_fd );
+			brd = 6; // 3000000 / ( 16 * 31250 ) = 6.0
+			memcpy( IBRD, &brd, 4 );
+			brd = 0;
+			memcpy( FBRD, &brd, 4 );
+			brd = 0x70; // 8 bit data, FIFO enabled
+			memcpy( LCRH, &brd, 4 );
 
-       if( uart_map == MAP_FAILED )
-       {
-          errsv = errno;
-          fprintf( stdout,"uart mmap failed\n" );
-          fprintf( stdout, "error %d %s\n", errsv, strerror( errsv ) );
-       }
-       else
-       {
-          uart = (volatile unsigned*)uart_map;
-          UARTFR = (void*)( (uint32_t)uart + 0x18 );
-          IBRD = (void*)( (uint32_t)uart + 0x24 );
-          FBRD = (void*)( (uint32_t)uart + 0x28 );
-          LCRH = (void*)( (uint32_t)uart + 0x2C );
-          UARTCR = (void*)( (uint32_t)uart + 0x30 );
+			// enable uart, tex, rex etc.
+			brd = 0x0B01;
+			memcpy( UARTCR, &brd, 4 );
 
-          // first, disable the uart and flush the fifos
-          brd = 0x0B00;
-          memcpy( UARTCR, &brd, 4 );
-
-          // check for completion of any tx/rx
-          memcpy( &brd, UARTFR, 4 );
-          while( brd & 0x08 )
-          {
-             usleep( 1 ); // wait a bit
-             memcpy( &brd, UARTFR, 4 );
-          }
-
-          brd = 6; // 3000000 / ( 16 * 31250 ) = 6.0
-          memcpy( IBRD, &brd, 4 );
-          brd = 0;
-          memcpy( FBRD, &brd, 4 );
-          brd = 0x70; // 8 bit data, FIFO enabled
-          memcpy( LCRH, &brd, 4 );
-
-          // enable uart, tex, rex etc.
-          brd = 0x0B01;
-          memcpy( UARTCR, &brd, 4 );
-
-          // close mmap once done here
-          munmap( uart_map, BLOCK_SIZE );
-       }
-    }
-    else
-    {   
-       errsv = errno;
-       fprintf( stdout,"%s access failed\n", MIDIDEVICE );
-       fprintf( stdout, "error %d %s\n", errsv, strerror( errsv ) );
-       MIDI_fd = 0;
-    }
+			// close mmap once done here
+			munmap( uart_map, BLOCK_SIZE );
+		}
+	} else {   
+		errsv = errno;
+		fprintf( stdout,"%s access failed\n", MIDIDEVICE );
+		fprintf( stdout, "error %d %s\n", errsv, strerror( errsv ) );
+		MIDI_fd = 0;
+	}
+	return;
 }
-
 
 int MIDIin(unsigned char *data) {
 	return read(MIDI_fd, data, 1 );

@@ -76,6 +76,18 @@ void storePatch(void) {
 	return;
 }
 
+void outputsToBus(void) {
+	int i, ii, n;
+	
+	n=120;
+	for (i=0;i<numberOfModules;i++) {
+		for(ii=0;ii<modOuts[i];ii++) {
+			patchOut[i][ii]=n;
+			n++;
+		}
+	}
+}
+
 void loadPatch(int prg) {
 	char tmp[100];
 	infil=fopen("counter.cnt","rb");
@@ -100,6 +112,8 @@ void loadPatch(int prg) {
 		fread(patchNote, 4, MAXMODS, infil);
 		fclose(infil);
 	}
+	
+	outputsToBus(); // correct all eventual messups with module outputs to bus...
 	return;
 }
 
@@ -326,23 +340,18 @@ void clearPatches(void) {
 	return;
 }
 
+
+
 void mainOpenModular(void) {
-	int i, ii;
-	int n=120;
+	int i;
+
 	unsigned char mididata;
 	makeNoteToFreqLUT(0);
 
 	clearPatches();
 	clearBusses();
-	loadPatch(0);
 	moduleRegistration();
-
-	for (i=0;i<numberOfModules;i++) {
-		for(ii=0;ii<modOuts[i];ii++) {
-			patchOut[i][ii]=n;
-			n++;
-		}
-	}
+	loadPatch(0);
 	
 #ifdef TEXTEDIT
 	editor();
@@ -364,6 +373,9 @@ void mainOpenModular(void) {
 			}
 			AudioOut();
 		}
+#ifdef TEXTEDIT
+		editor_doparams();
+#endif		
 	}
 	return; // never reached
 }

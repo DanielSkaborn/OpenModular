@@ -5,7 +5,8 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
-
+#include <time.h>
+#include <stdlib.h>
 
 //float sinustable[8193];
 float wavetable[4097][3];
@@ -99,7 +100,7 @@ void module_ADSR1(int id) {
 				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
 			else
 				d=0.3;
-//			signal = 0.0f;
+			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -140,7 +141,7 @@ void module_ADSR1(int id) {
 	} //switch
 	lastgate = GATE;
 	AOUT0=signal;
-
+	
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -149,7 +150,7 @@ void module_ADSR1(int id) {
 void regModule_ADSR1(int id) {
 	moduleRegistry[id] = module_ADSR1;
 	module_ADSR1(-1); // init
-
+	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
@@ -192,7 +193,7 @@ void module_ADSR2(int id) {
 				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
 			else
 				d=0.3;
-//			signal = 0.0f;
+			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -233,7 +234,7 @@ void module_ADSR2(int id) {
 	} //switch
 	lastgate = GATE;
 	AOUT0=signal;
-
+	
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -242,11 +243,11 @@ void module_ADSR2(int id) {
 void regModule_ADSR2(int id) {
 	moduleRegistry[id] = module_ADSR2;
 	module_ADSR2(-1); // init
-
-//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
-//                   "        \0";
+//               "        \0";
 	char name[9]="ADSR2   \0";
 
 	modIns[id]     = 6;
@@ -254,46 +255,6 @@ void regModule_ADSR2(int id) {
 
 	copymodstrings(id, name, inNames, outNames);
 	return;
-}
-
-void module_Delay(int id) {
-	static float delaymem[SAMPLERATE]; // 1s of delay memory
-	static int storepointer, playbackpointer;
-	static float storepointerf;
-	if (id==-1) {
-		storepointerf=0.0;
-	}
-
-	storepointerf += ((AIN2+1.0f)/2.0f);
-	if (storepointerf > SAMPLERATEF) storepointerf-=SAMPLERATEF;
-//	storepointer++;;
-	storepointer = (int)(storepointerf);
-//	if (storepointer == SAMPLERATE) storepointer = 0;
-
-	delaymem[storepointer] = AIN0;
-
-	playbackpointer = storepointer - (AIN1+1) *SAMPLERATE/2;
-	if (playbackpointer < 0) playbackpointer += SAMPLERATE;
-
-	AOUT0 = delaymem[playbackpointer];
-	return;
-}
-
-void regModule_Delay(int id) {
-        moduleRegistry[id] = module_Delay;
-        module_Delay(-1); // init
-
-//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-        char inNames[4*MAXIN+1]   = "IN  TIMESLOW                                                    \0";
-        char outNames[4*MAXOUT+1] = "OUT                                                             \0";
-//                   "        \0";
-        char name[9]="DELAY   \0";
-
-        modIns[id]     = 3;
-        modOuts[id]    = 1;
-
-        copymodstrings(id, name, inNames, outNames);
-        return;
 }
 
 void module_WTCrunch(int id) {
@@ -1051,8 +1012,131 @@ void regModule_Oscilator2(int id) {
 
 }
 
-void module_WavetableOsc1(int id) {
+void module_Knaster(int id) {
+	//static int c;
+	int r;
+	if (id==-1) {
+		//c=0;
+		srand(time(NULL));
+		return;
+	}
+
+	r=rand();
+	if (r<0) r=-r;
 	
+	if (r < (AIN1+1) * RAND_MAX/1000)
+		AOUT0 = (float)(rand()) / ((float)(RAND_MAX)) * AIN0;
+	else
+		AOUT0=0;
+	
+	return;
+}
+
+void regModule_Knaster(int id) {
+	moduleRegistry[id] = module_Knaster;
+	module_Knaster(-1); // init
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "LEV PROB                                                        \0";
+	char outNames[4*MAXOUT+1] = "OUT                                                             \0";
+//               "        \0";
+	char name[9]="Knaster \0";
+	
+	modIns[id]     = 2;
+	modOuts[id]    = 1;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+
+}
+
+void module_Delay(int id) {
+
+	static float delaymem[SAMPLERATE]; // 1s of delay memory
+	static int storepointer, playbackpointer;
+	static float storepointerf;
+	float step;
+
+	if (id==-1) {
+		storepointerf=0.0;
+		return;
+	}
+
+	step = ((AIN2+1.0f)/2.0f);
+	if (step>1.0) step = 1.0;
+	if (step<0.0) step = 0.01;
+	storepointerf += step;
+	if (storepointerf > SAMPLERATEF) storepointerf-=SAMPLERATEF;
+	storepointer = (int)(storepointerf); 
+
+
+	delaymem[storepointer] = AIN0;
+
+	playbackpointer = storepointer - ((AIN1+1) * SAMPLERATE/2);
+	if (playbackpointer < 0) playbackpointer += SAMPLERATE;
+
+	AOUT0 = delaymem[playbackpointer];
+	return;
+}
+
+void regModule_Delay(int id) {
+        moduleRegistry[id] = module_Delay;
+        module_Delay(-1); // init
+
+//                                  "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+        char inNames[4*MAXIN+1]   = "IN  TIMESLOW                                                    \0";
+        char outNames[4*MAXOUT+1] = "OUT                                                             \0";
+//                   "        \0";
+        char name[9]="DELAY   \0";
+
+        modIns[id]     = 3;
+        modOuts[id]    = 1;
+
+        copymodstrings(id, name, inNames, outNames);
+        return;
+}
+
+void module_Noise(int id) {
+	static unsigned long m_white, m_seed;
+
+	if (id==-1) {
+		srand(time(NULL));
+		m_white = 0;
+		m_seed = time(NULL);
+		return;
+	}
+	
+	// Uniform noise 
+	AOUT0=((AIN0+1.0)/2.0)*(float)(rand()/(float)(RAND_MAX/2.0));
+
+	// White noise
+	m_seed   = (m_seed * 196314165) + 907633515;
+	m_white  = m_seed >> 9; 
+	m_white |= 0x40000000; 
+	AOUT1 = ((*(float*)&m_white)-3.0f)*((AIN1+1.0)/2.0); 
+	
+	return;
+}
+
+void regModule_Noise(int id) {
+	moduleRegistry[id] = module_Noise;
+	module_Noise(-1); // init
+
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "LEVULEVW                                                        \0";
+	char outNames[4*MAXOUT+1] = "UNI WHTE                                                        \0";
+//               "        \0";
+	char name[9]="Noise   \0";
+	
+	modIns[id]     = 2;
+	modOuts[id]    = 2;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+
+}
+
+void module_WavetableOsc1(int id) {
 	static int switcher=0;
 	static unsigned char lastnote=0;
 	static float toneFreq=20.1;
@@ -1278,7 +1362,9 @@ void moduleRegistration(void) {
 	regModule_SampleAndHold(11);
 	regModule_Smoothie(12);
 	regModule_Gain(13);
-	regModule_Delay(14);
+	regModule_Knaster(14);
+	regModule_Noise(15);
+	regModule_Delay(16);
 
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
@@ -1294,7 +1380,7 @@ void moduleRegistration(void) {
 	regModule_Output(11);
 */	//regModule_Sequencer(12);
 
-	numberOfModules=15;
+	numberOfModules=17;
 
 	return;
 }

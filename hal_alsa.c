@@ -132,7 +132,9 @@ int main(void)
 }
 
 void editor(void) {
+#ifdef TEXTEDIT
 	pthread_create(&patchconnector, NULL, patchtexteditor, NULL);
+#endif
 	return;
 }
 
