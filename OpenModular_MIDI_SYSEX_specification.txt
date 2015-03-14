@@ -13,46 +13,14 @@ d       data (BIN) 0xxx xxxx
 
 
 
-Set Audio Patch Input
+Set Patch Input
 c = 0x01
 data content
 byte#	
 1       module ID number
 2       module audio in port number
-3       audio bus number
-
-
-
-Set Audio Patch Output
-c = 0x02
-data:
-byte#	
-1       module ID Number
-2       module audioout port number
-3       audio bus number
-
-
-
-Set Control Patch Input
-c = 0x03
-data:
-byte#	
-1       module ID Number
-2       module control input port number
-3       control bus number bit 6-0 (LSBs)
-4		control bus number bit 14-7 (MSBs)
-
-
-
-Set Control Patch Output
-c = 0x04
-data:
-byte#	
-1       module ID number
-2       module control output port number
-3       control bus number bit 6-0 (LSBs)
-4		control bus number bit 14-7 (MSBs)
-
+3       bus number low 7bits
+4	bus number high 7bits
 
 
 Request Patch Dump
@@ -80,14 +48,11 @@ module descriptor
 length
 1       ID number
 8       name (7bit ASCII)
-1       number of audio in ports NAI
-1       number of audio out ports NAO
-1       number of control in ports NCI
-1       number of control out ports NCO
+1       number of in ports NAI
+1       number of out ports NAO
 4xNAI	audio in port 0 to NAI tags (7bit ASCII) 4 characters per port tag
-4xNAI	audio out port 0 to NAO tags (7bit ASCII) 4 characters per port tag
-4xNAI	control in port 0 to NCI tags (7bit ASCII) 4 characters per port tag
-4xNAI	control in port 0 to NCI tags (7bit ASCII) 4 characters per port tag
+4xNAO	audio out port 0 to NAO tags (7bit ASCII) 4 characters per port tag
+
 
 
 Patch Dump
@@ -102,19 +67,8 @@ patch module:
 ID number
 gate      0=connected to gate bus0 (first note pressed), 1= connected to gate bus1 (2nd note pressed) 2 = not connected
 note      0=connected to note bus0 (first note pressed), 1= connected to note bus1 (2nd note pressed) 2 = not connected
-audioin0  audio bus number
-..
-audioin3  audio bus number
-audioout0 audio bus number
-..
-audioout3 audio bus number
-ctrlin0   control bus number bit 6-0 (LSBs)
-ctrlin0   control bus number bit 14-7 (MSBs)
+patchin0   bus number bit 6-0 (LSBs)
+patchin0   bus number bit 14-7 (MSBs)
 ...
-ctrlin15  control bus number bit 6-0 (LSBs)
-ctrlin15  control bus number bit 14-7 (MSBs)
-ctrlout0  control bus number bit 6-0 (LSBs)
-ctrlout0  control bus number bit 14-7 (MSBs)
-...
-ctrlout15 control bus number bit 6-0 (LSBs)
-ctrlout15 control bus number bit 14-7 (MSBs)
+patchin15  bus number bit 6-0 (LSBs)
+patchin15  bus number bit 14-7 (MSBs)
