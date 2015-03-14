@@ -79,7 +79,7 @@ void storePatch(void) {
 void outputsToBus(void) {
 	int i, ii, n;
 	
-	n=120;
+	n=121;
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
 			patchOut[i][ii]=n;
@@ -172,7 +172,7 @@ void sendPatchDump(void) {
 
 void parse(unsigned char inbuf){
 	static int mps=0;
-	static char tmp1=0, tmp2=0;
+	static char tmp1=0, tmp2=0, tmp3=0;
 
 	//printf("parse 0x%02x\n",inbuf);
 	switch (mps) {
@@ -243,7 +243,7 @@ void parse(unsigned char inbuf){
 			break;
 		case 9:
 			pitchBendRaw = tmp1 + (inbuf * 0x100);
-			pitchBend = (float)(pitchBendRaw-16382) / 16382.0;
+			patchBus[120][togglerIn] = (float)(pitchBendRaw-16382) / 16382.0;
 			mps=0;
 			break;
 
@@ -261,10 +261,7 @@ void parse(unsigned char inbuf){
 			break;
 		case 13:
 			mps=0;
-			if (inbuf == 0x01) mps=14; // Set AudioPatchIn
-			if (inbuf == 0x02) mps=17; // Set AudioPatchOut
-			if (inbuf == 0x03) mps=20; // Set CtrlPatchIn
-			if (inbuf == 0x04) mps=23; // Set CtrlPatchOut
+			if (inbuf == 0x01) mps=14; // Set PatchIn
 			if (inbuf == 0x05) mps=26; // Request Patch Dump
 			if (inbuf == 0x06) mps=27; // Request Modules Information
 
@@ -273,24 +270,16 @@ void parse(unsigned char inbuf){
 			tmp1=inbuf; // moduleID
 			mps=15;
 			break;
-		case 15: // TODO CHANGE TO HIGHBYTE / LOWBYTE
+		case 15: 
 			tmp2=inbuf; // moduleInPort
 			mps=16;
 			break;
 		case 16:
-			patchIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
-			mps=0;
+			tmp3=inbuf; // patchnuber high 7bits
+			mps=17;
 			break;
-		case 17: // Set PatchOut
-			tmp1=inbuf; // moduleID
-			mps=18;
-			break;
-		case 18:
-			tmp2=inbuf; // moduleInPort
-			mps=19;
-			break;
-		case 19:
-			patchOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf); // TODO CHANGE TO HIGH7BITS andLOW7BITS
+		case 17: // patchnumber low 7bits
+			patchIn[(int)(tmp1)][(int)(tmp2)] = (inbuf & 0x7F) + (tmp3*0x80);		
 			mps=0;
 			break;
 		case 26: // Request Of Patch Dump

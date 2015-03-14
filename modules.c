@@ -40,7 +40,7 @@ void regModule_Gain(int id) {
 	char inNames[4*MAXIN+1]    = "X1  Y1  X2  Y2  X3  Y3  X4  Y4                                  \0"; 	
 	char outNames[4*MAXOUT+1]  = "Z1  Z2  Z3  Z4  SUMZ                                            \0";
 //               "        \0";
-	char name[9]="MULTIPLY\0";
+	char name[9]="Multiply\0";
 
 	modIns[id]      = 8;
 	modOuts[id]     = 5;
@@ -62,7 +62,7 @@ void regModule_Output(int id) {
 	char inNames[4*MAXIN+1]    = "L   R                                                           \0"; 	
 	char outNames[4*MAXOUT+1]  = "                                                                \0";
 //               "        \0";
-	char name[9]="OUTPUT  \0";
+	char name[9]="Output  \0";
 
 	modIns[id]      = 2;
 	modOuts[id]     = 0;
@@ -155,7 +155,7 @@ void regModule_ADSR1(int id) {
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
 //               "        \0";
-	char name[9]="ADSR1   \0";
+	char name[9]="Env-1   \0";
 
 	modIns[id]     = 6;
 	modOuts[id]    = 3;
@@ -248,7 +248,7 @@ void regModule_ADSR2(int id) {
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
 //               "        \0";
-	char name[9]="ADSR2   \0";
+	char name[9]="Env-2   \0";
 
 	modIns[id]     = 6;
 	modOuts[id]    = 3;
@@ -375,7 +375,7 @@ void regModule_Gate2Bus(int id) {
 	char inNames[4*MAXIN+1]   = "IN1 IN2 R                                                       \0";
 	char outNames[4*MAXOUT+1] = "GA1 GA2 G1  G2                                                  \0";
 //               "        \0";
-	char name[9]="GATE2BUS\0";
+	char name[9]="Gatebus \0";
 
 	modIns[id]     = 3;
 	modOuts[id]    = 4;
@@ -422,20 +422,21 @@ void module_LFO1(int id) {
 			dir = 1;
 	}
 		
-	AOUT0=accout-1.0;
+	AOUT0=(accout-1.0)*AIN3;
+	AOUT1=-AOUT0;
 	return;
 }
 void regModule_LFO1(int id) {
 	moduleRegistry[id] = module_LFO1;
 	module_LFO1(-1); // init
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
-	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
+	char inNames[4*MAXIN+1]   = "RATEMAX AMT                                                     \0";
+	char outNames[4*MAXOUT+1] = "TRI INV                                                         \0";
 //               "        \0";
 	char name[9]="LFOTRI1 \0";
 	
 	modIns[id]     = 2;
-	modOuts[id]    = 1;
+	modOuts[id]    = 2;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
@@ -477,7 +478,8 @@ void module_LFO2(int id) {
 			dir = 1;
 	}
 		
-	AOUT0=accout-1.0;
+	AOUT0=(accout-1.0)*AIN3;;
+	AOUT1=-AOUT0;
 	return;
 }
 void regModule_LFO2(int id) {
@@ -485,13 +487,13 @@ void regModule_LFO2(int id) {
 	module_LFO2(-1); // init
 	
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "RATEMAX                                                         \0";
-	char outNames[4*MAXOUT+1] = "TRI                                                             \0";
+	char inNames[4*MAXIN+1]   = "RATEMAX AMT                                                     \0";
+	char outNames[4*MAXOUT+1] = "TRI INV                                                         \0";
 //               "        \0";
 	char name[9]="LFOTRI2 \0";
 	
-	modIns[id]     = 2;
-	modOuts[id]    = 1;
+	modIns[id]     = 3;
+	modOuts[id]    = 2;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
@@ -522,7 +524,6 @@ void module_Smoothie(int id) {
 		case 50:
 			if ( AIN0 > laout0 ) AOUT0 = laout0 + smooth;
 			if ( AIN0 < laout0 ) AOUT0 = laout0 - smooth;
-//			if (laout0!=AOUT0) printf("%f %f \n",laout0,smooth);
 			laout0 = AOUT0;
 			break;
 		case 100:
@@ -554,7 +555,7 @@ void regModule_Smoothie(int id) {
 	char inNames[4*MAXIN+1]   = "IN0 IN1 IN2 IN3 SMTH                                            \0";
 	char outNames[4*MAXOUT+1] = "OUT0OUT1OUT2OUT3                                                \0";
 //               "        \0";
-	char name[9]="SMOOTHIE\0";
+	char name[9]="Smoothie\0";
 	
 	modIns[id]     = 5;
 	modOuts[id]    = 4;
@@ -668,7 +669,7 @@ void regModule_Sequencer(int id) {
 	char inNames[4*MAXIN+1]   = "                                                                \0";
 	char outNames[4*MAXOUT+1] = "                                                                \0";
 //               "        \0";
-	char name[9]="SEQ     \0";
+	char name[9]="Seq     \0";
 	
 	modIns[id]     = 0;
 	modOuts[id]    = 0;
@@ -752,7 +753,7 @@ void regModule_Filter1(int id) {
 	char inNames[4*MAXIN+1]   = "IN  CF  RES                                                     \0";
 	char outNames[4*MAXOUT+1] = "LP  HP  BP                                                      \0";
 //               "        \0";
-	char name[9]="FILTER1 \0";
+	char name[9]="Filter1 \0";
 	
 	modIns[id]     = 3;
 	modOuts[id]    = 3;
@@ -833,7 +834,7 @@ void regModule_Filter2(int id) {
 	char inNames[4*MAXIN+1]   = "IN  CF  RES                                                     \0";
 	char outNames[4*MAXOUT+1] = "LP  HP  BP                                                      \0";
 //               "        \0";
-	char name[9]="FILTER2 \0";
+	char name[9]="Filter2 \0";
 	
 	modIns[id]     = 3;
 	modOuts[id]    = 3;
@@ -909,7 +910,7 @@ void regModule_Oscilator1(int id) {
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "PW  TUNECRS                                                     \0";
 	char outNames[4*MAXOUT+1] = "SAW SQR                                                         \0";
-	char name[9]="OSC1    \0";
+	char name[9]="Osc1    \0";
 	
 	modIns[id]     = 3;
 	modOuts[id]    = 2;
@@ -986,7 +987,7 @@ void regModule_Oscilator2(int id) {
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "PW  TUNE                                                        \0";
 	char outNames[4*MAXOUT+1] = "SAW SQR                                                         \0";
-	char name[9]="OSC2    \0";
+	char name[9]="Osc2    \0";
 	
 	modIns[id]     = 2;
 	modOuts[id]    = 2;
@@ -1071,7 +1072,7 @@ void regModule_Delay(int id) {
         char inNames[4*MAXIN+1]   = "IN  TIMESLOW                                                    \0";
         char outNames[4*MAXOUT+1] = "OUT                                                             \0";
 //                   "        \0";
-        char name[9]="DELAY   \0";
+        char name[9]="Delay   \0";
 
         modIns[id]     = 3;
         modOuts[id]    = 1;

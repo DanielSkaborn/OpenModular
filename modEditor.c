@@ -30,6 +30,9 @@ void printModOuts(void) {
 				printConnectsTo(i);
 			}
 	}
+	printf("\n 120 PitchBend        ");
+	printConnectsTo(120);
+	
 	printf("\n\n");
 	
 	for (i=0;i<numberOfModules;i++) {
