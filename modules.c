@@ -96,11 +96,8 @@ void module_ADSR1(int id) {
 			signal = 0.0f;
 			break;
 		case 1: // Attack calculate
-			if (AIN0 != -1)
-				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
-			else
-				d=0.3;
-			signal = 0.0f;
+			d=1.0f/( (AIN0+1.02) * 2.5 * SAMPLERATEF);
+			//signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -110,10 +107,7 @@ void module_ADSR1(int id) {
 			}
 			break;
 		case 3: // Decay calculate
-			if (AIN0 != -1)
-				d = 1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
-			else
-				d = 0.1;
+			d = 1.0f/( (AIN1+1.02) * 2.5 * SAMPLERATEF);
 			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
 		case 4: // Decay proceed
@@ -125,7 +119,7 @@ void module_ADSR1(int id) {
 		case 5: // Sustain
 			break;
 		case 6: // Release
-			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
+			d=1.0f/( (AIN3+1.02) * 2.5 * SAMPLERATEF);
 			state = 7;
 		case 7: // Release proceed
 			signal-=d;
@@ -140,8 +134,8 @@ void module_ADSR1(int id) {
 			break;
 	} //switch
 	lastgate = GATE;
-	AOUT0=signal;
-	
+	AOUT0=(signal*2)-1.0;
+
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -150,7 +144,7 @@ void module_ADSR1(int id) {
 void regModule_ADSR1(int id) {
 	moduleRegistry[id] = module_ADSR1;
 	module_ADSR1(-1); // init
-	
+
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
 	char inNames[4*MAXIN+1]   = "ATT DEC SUS REL IN1 IN2                                         \0";
 	char outNames[4*MAXOUT+1] = "ADSROUT1OUT2                                                    \0";
@@ -189,11 +183,8 @@ void module_ADSR2(int id) {
 			signal = 0.0f;
 			break;
 		case 1: // Attack calculate
-			if (AIN0 != -1)
-				d=1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
-			else
-				d=0.3;
-			signal = 0.0f;
+			d=1.0f/( (AIN0+1.02) * 2.5 * SAMPLERATEF);
+//			signal = 0.0f;
 			state  = 2;
 		case 2: // Attack proceed
 			signal+=d;
@@ -203,10 +194,7 @@ void module_ADSR2(int id) {
 			}
 			break;
 		case 3: // Decay calculate
-			if (AIN0 != -1)
-				d = 1.0f/( (AIN0+1.0) * 2.5 * SAMPLERATEF);
-			else
-				d = 0.1;
+			d = 1.0f/( (AIN1+1.02) * 2.5 * SAMPLERATEF);
 			sustain = (float)(AIN2+1.0)/2.0;
 			state = 4;
 		case 4: // Decay proceed
@@ -218,7 +206,7 @@ void module_ADSR2(int id) {
 		case 5: // Sustain
 			break;
 		case 6: // Release
-			d=1.0f/( (AIN3+1.0) * 2.5 * SAMPLERATEF);
+			d=1.0f/( (AIN3+1.02) * 2.5 * SAMPLERATEF);
 			state = 7;
 		case 7: // Release proceed
 			signal-=d;
@@ -233,8 +221,8 @@ void module_ADSR2(int id) {
 			break;
 	} //switch
 	lastgate = GATE;
-	AOUT0=signal;
-	
+	AOUT0=(signal*2)-1;
+
 	// just a little VCA
 	AOUT1=AIN4*signal;
 	AOUT2=AIN5*signal;
@@ -1363,9 +1351,9 @@ void moduleRegistration(void) {
 	regModule_LFO2(9);
 	regModule_Gate2Bus(10);
 	regModule_Output(11);
-*/	//regModule_Sequencer(12);
+*/	regModule_Sequencer(17);
 
-	numberOfModules=17;
+	numberOfModules=18;
 
 	return;
 }

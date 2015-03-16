@@ -49,7 +49,7 @@ FILE *utfil;
 
 void storePatch(void) {
 	char tmp[100];
-	
+
 	infil=fopen("counter.cnt","r");
 	if (infil==NULL) {
 		printf("No counterfile, will start from program-zero.\n");
@@ -78,7 +78,7 @@ void storePatch(void) {
 
 void outputsToBus(void) {
 	int i, ii, n;
-	
+
 	n=121;
 	for (i=0;i<numberOfModules;i++) {
 		for(ii=0;ii<modOuts[i];ii++) {
@@ -100,7 +100,7 @@ void loadPatch(int prg) {
 		fclose(infil);
 	}
 
-	if (prg > filecounter) {
+	if (prg > (filecounter-1)) {
 		printf("No stored patch at program %d\n",prg);
 	} else {
 		sprintf(tmp, "%03d.omo", prg);
@@ -173,8 +173,8 @@ void sendPatchDump(void) {
 void parse(unsigned char inbuf){
 	static int mps=0;
 	static char tmp1=0, tmp2=0, tmp3=0;
+	static char lastctrl;
 
-	//printf("parse 0x%02x\n",inbuf);
 	switch (mps) {
 		case 0: // wait for any data
 			if (inbuf == (0xB0+CHANNEL)) mps=1; // CC
@@ -194,8 +194,14 @@ void parse(unsigned char inbuf){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-//				printf("cc %d\n",tmp1);
-				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
+				if ((tmp1<121)&& (inbuf<0x80)) {
+//					if(inbuf==0x10) printf("bingo!\n");
+//					if(tmp1!=lastctrl) {
+//						printf("CC-%d\n",tmp1);
+//						lastctrl=tmp1;
+//					}
+					patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
+				}
 			}
 			mps=0;
 			break;
@@ -233,7 +239,8 @@ void parse(unsigned char inbuf){
 			break;
 
 		case 7: // Program change
-			loadPatch(inbuf);
+			if (inbuf<0x80)
+				loadPatch(inbuf);
 			mps=0;
 			break;
 
@@ -270,7 +277,7 @@ void parse(unsigned char inbuf){
 			tmp1=inbuf; // moduleID
 			mps=15;
 			break;
-		case 15: 
+		case 15:
 			tmp2=inbuf; // moduleInPort
 			mps=16;
 			break;
@@ -335,6 +342,8 @@ void mainOpenModular(void) {
 	int i;
 
 	unsigned char mididata;
+
+	printf("Start OpenModular\n");
 	makeNoteToFreqLUT(0);
 
 	clearPatches();

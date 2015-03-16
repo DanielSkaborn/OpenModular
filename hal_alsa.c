@@ -12,8 +12,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define SAMPLERATE		48000
-#define SAMPLERATEF		48000.0f
+#define SAMPLERATE		44100
+#define SAMPLERATEF		44100.0f
 
 #define MIDIDEVICE		"/dev/snd/midiC1D0"
 #define ALSADEVICE      "plughw:2,0"
@@ -27,8 +27,8 @@ pthread_t patchconnector;
 snd_output_t *output = NULL;
 snd_pcm_sframes_t frames;
 
-int16_t audiobuffer1[256];
-int16_t audiobuffer2[256];
+int16_t audiobuffer1[256]; 
+int16_t audiobuffer2[256]; 
 volatile unsigned char activebuffer = 0;
 volatile unsigned char bufferfull = 0;
 snd_pcm_t *handle;
@@ -132,9 +132,7 @@ int main(void)
 }
 
 void editor(void) {
-#ifdef TEXTEDIT
 	pthread_create(&patchconnector, NULL, patchtexteditor, NULL);
-#endif
 	return;
 }
 
