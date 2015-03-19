@@ -173,7 +173,7 @@ void sendPatchDump(void) {
 void parse(unsigned char inbuf){
 	static int mps=0;
 	static char tmp1=0, tmp2=0, tmp3=0;
-	static char lastctrl;
+//	static char lastctrl;
 
 	switch (mps) {
 		case 0: // wait for any data

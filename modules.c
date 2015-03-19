@@ -7,8 +7,9 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <math.h>
 
-//float sinustable[8193];
+float sinustable[8193];
 float wavetable[4097][3];
 int tableToUse = 0;
 
@@ -487,6 +488,108 @@ void regModule_LFO2(int id) {
 	return;
 }
 
+void module_BD(int id) {
+	static int lastgate, /*lastnote,*/ state;
+	static int counter;	
+	static float phase, freq, dfreq, level, levstep;
+	
+	if (id==-1) {	// init
+		int i;
+		for (i=0;i<8193;i++)
+			sinustable[i] = sinf(2.0*3.14159265359*(float)(i)/8192.0)*sinf(2.0*3.14159265359*(float)(i)/8192.0);
+
+		lastgate=0;
+//		lastnote=1;
+		state=0;
+		return;
+	}
+	
+	// Gate signal trigging
+	if ( (lastgate==0) && (GATE!=0) ) {
+		counter = ((AIN0+1)*SAMPLERATE)/20; // up to 1/10 sec
+		if (counter<0)
+			counter=0;
+		freq = (AIN2+1.001) * 250.0;
+		dfreq = (AIN3+1) * 0.01;
+		phase = 0.0;
+		if (state!=0) {
+			state=2;
+		} else {
+			state=1; // Go for it!
+		}
+	}
+	
+	switch (state) {
+		case 0:
+			AOUT0=0; // nada
+			break;
+			
+		case 1: // rise freq
+			AOUT0 = sinustable[(int)(phase)];
+			phase = phase + (8192.0/SAMPLERATEF*freq);
+			if (phase > 8192.0)
+				phase = phase - 8192.0;
+			freq += dfreq;
+
+			if (counter==0) {
+				counter = (AIN1+1)*SAMPLERATE/4; // up to 0.5sec
+				levstep = 1.0/(float)(counter);
+				dfreq = (AIN4+1)*0.01;
+				level=1;
+				state=3;
+			} else {
+				counter--;
+			}
+			break;
+		
+		case 3: // drop freq
+			AOUT0 = sinustable[(int)(phase)] * level;
+			level -= levstep;
+			phase = phase + (8192.0/SAMPLERATEF)*freq;
+			if (phase > 8192.0) {
+				phase = phase - 8192.0;
+			}
+			if (freq>20) {
+				freq -= dfreq;
+				dfreq/=1.0001;
+			}
+
+			if (freq<10.0) {
+				freq=10.0;
+				levstep=0.05;
+			}
+			if (counter==0) {
+				state=0;
+			} else {
+				counter--;
+			}
+			break;
+		default:
+			state=0;
+			AOUT0=0;
+			break;
+	}
+	lastgate=GATE;
+	return;
+}
+
+void regModule_BD(int id) {
+	moduleRegistry[id] = module_BD;
+	module_BD(-1); // init
+	
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "T1  T2  F   dF1 dF2                                             \0";
+	char outNames[4*MAXOUT+1] = "BD                                                              \0";
+//               "        \0";
+	char name[9]="BassDrum\0";
+	
+	modIns[id]     = 5;
+	modOuts[id]    = 1;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
+
 void module_Smoothie(int id) {
 	static int counter=0;
 	static float smooth, laout0, laout1, laout2, laout3;
@@ -616,29 +719,36 @@ void module_Sequencer(int id) {
 				note[1]=47;
 				break;
 			case 1:
+				gate[0]=0;
 				note[0]=47;
 				note[1]=49;
 				break;
 			case 2:
+				gate[0]=100;
 				note[0]=42;
 				note[1]=42;
 				break;
 			case 3:
 				note[0]=49;
+				gate[0]=0;
 				gate[1]=0;
 				break;
 			case 4:
+				gate[0]=120;
 				note[0]=47;
 				break;
 			case 5:
+				gate[0]=0;
 				note[0]=47;
 				note[1]=49;
 				gate[1]=100;
 				break;
 			case 6:
+				gate[0]=100;
 				note[0]=42;
 				break;
 			case 7:
+				gate[0]=0;
 				note[0]=50;
 				step=-1;
 				break;
@@ -1338,7 +1448,7 @@ void moduleRegistration(void) {
 	regModule_Knaster(14);
 	regModule_Noise(15);
 	regModule_Delay(16);
-
+	regModule_BD(17);
 /*	regModule_Oscilator1(0);
 	regModule_Oscilator2(1);
 	regModule_Smoothie(2);
@@ -1351,9 +1461,9 @@ void moduleRegistration(void) {
 	regModule_LFO2(9);
 	regModule_Gate2Bus(10);
 	regModule_Output(11);
-*/	regModule_Sequencer(17);
+*/	regModule_Sequencer(18);
 
-	numberOfModules=18;
+	numberOfModules=19;
 
 	return;
 }
