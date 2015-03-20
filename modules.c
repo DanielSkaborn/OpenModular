@@ -512,11 +512,7 @@ void module_BD(int id) {
 		freq = (AIN2+1.001) * 250.0;
 		dfreq = (AIN3+1) * 0.01;
 		phase = 0.0;
-		if (state!=0) {
-			state=2;
-		} else {
-			state=1; // Go for it!
-		}
+		state=1; // Go for it!
 	}
 	
 	switch (state) {
@@ -590,6 +586,36 @@ void regModule_BD(int id) {
 	return;
 }
 
+void module_Derive(int id) {
+	static float lastvalue1, lastvalue0;
+	
+	if (id==-1) {
+		lastvalue0=0;
+		lastvalue1=0;
+		return;
+	}
+	AOUT0 = (AIN0-lastvalue0) * (50*(AIN2+1));
+	AOUT1 = (AIN1-lastvalue1) * (50*(AIN2+1));
+	lastvalue0 = AIN0;
+	lastvalue1 = AIN1;
+	return;
+}
+void regModule_Derive(int id) {
+	moduleRegistry[id] = module_Derive;
+	module_Derive(-1); // init
+	
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "X   Y   Amp                                                     \0";
+	char outNames[4*MAXOUT+1] = "dXdTdYdT                                                        \0";
+//               "        \0";
+	char name[9]="Derive  \0";
+	
+	modIns[id]     = 3;
+	modOuts[id]    = 2;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
 void module_Smoothie(int id) {
 	static int counter=0;
 	static float smooth, laout0, laout1, laout2, laout3;
@@ -1449,21 +1475,10 @@ void moduleRegistration(void) {
 	regModule_Noise(15);
 	regModule_Delay(16);
 	regModule_BD(17);
-/*	regModule_Oscilator1(0);
-	regModule_Oscilator2(1);
-	regModule_Smoothie(2);
-	regModule_SampleAndHold(3);
-	regModule_ADSR(4);
-	regModule_Gain(5);
-	regModule_Filter1(6);
-	regModule_Filter2(7);
-	regModule_LFO(8);
-	regModule_LFO2(9);
-	regModule_Gate2Bus(10);
-	regModule_Output(11);
-*/	regModule_Sequencer(18);
-
-	numberOfModules=19;
+	regModule_Derive(18);
+	regModule_Sequencer(19);
+	
+	numberOfModules=20;
 
 	return;
 }
