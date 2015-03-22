@@ -7,7 +7,5 @@ The synth has been tested running under Ubuntu 12.4 on a Pentium 4 and under NOO
 
 ##Licence and usage
 GNU GENERAL PUBLIC LICENSE Version 2
-with some restrictions:<br />
-1. Any kind of implementation utilizing/based on the OpenModular architectur should include OpenModular in the naming.<br />
-2. For any commercial usage please contact the initiator of the architecture.
-
+with one restrictions:<br />
+Any kind of implementation utilizing/based on the OpenModular architectur should include OpenModular in the naming and have use the openModular logo. ![Picture](openModular_logo.svg)<br />
