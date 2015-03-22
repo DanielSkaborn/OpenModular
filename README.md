@@ -1,5 +1,5 @@
 
-![](https://raw.githubusercontent.com/DanielSkaborn/OpenModular/master/openModular_logo.svg)
+![](https://rawgit.com/DanielSkaborn/OpenModular/master/openModular_logo.svg)
 #OpenModular
 ##Software Defined Modular Synth
 This is a software defined modular synth written in C. It it portable to different platforms, and for now there are HAL (hardware abstraction layer) for ALSA. <br />
