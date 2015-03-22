@@ -886,6 +886,76 @@ void regModule_Filter1(int id) {
 	return;
 }
 
+void module_Bwlpf(int id) {
+	static float s, r, A[4], d1[4], d2[4], Lw0[4], Lw1[4], Lw2[4], Rw0[4], Rw1[4], Rw2[4], lastcin3, lastcin2;
+	static int n;
+
+	float temp, f, a, a2 ;
+	int i;
+	
+	if (id==-1) {	// init
+		lastcin2=-2;
+		lastcin3=-2;
+		return;
+	}
+	
+	if ( ( lastcin2 != AIN2 ) || ( lastcin3!=AIN3 ) ) { // calc for new freq / order
+		lastcin2 = AIN2; lastcin3 = AIN3;
+		if (AIN2<-1.0)
+			temp=-0.99;
+		else
+			temp=AIN2; 
+		temp+=1.0;
+		f = 20.0f + (temp * 2000.0);	// 20 to 4020Hz
+		a = tan(M_PI * f/SAMPLERATEF);
+		a2 = a * a;
+		
+		if ( AIN3 < -0.33 )
+			n=2;
+		else if ( AIN3 < 0.33)
+			n=3;
+		else
+			n=4;
+		
+		for(i=0; i<n; ++i) {
+			r = sin( M_PI * ( 2.0 * i + 1.0 ) / ( 4.0 * n ) );
+			s = a2 + 2.0 * a * r + 1.0;
+			A[i] = a2 / s;
+			d1[i] = 2.0 * ( 1 - a2 ) / s;
+			d2[i] = -(a2 - 2.0 * a * r + 1.0) / s;
+		}
+	}
+	
+	// process
+	for(i=0; i<n; ++i) {
+		Lw0[i] = d1[i]*Lw1[i] + d2[i]*Lw2[i] + AIN0;
+		AOUT0 = A[i]*(Lw0[i] + 2.0*Lw1[i] + Lw2[i]);
+		Lw2[i] = Lw1[i];
+		Lw1[i] = Lw0[i];
+      
+		Rw0[i] = d1[i]*Rw1[i] + d2[i]*Rw2[i] + AIN1;
+		AOUT1 = A[i]*(Rw0[i] + 2.0*Rw1[i] + Rw2[i]);
+		Rw2[i] = Rw1[i];
+		Rw1[i] = Rw0[i];
+    }
+	return;
+}
+
+void regModule_Bwlpf(int id) {
+	moduleRegistry[id] = module_Bwlpf;
+	module_Bwlpf(-1); // init
+//                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]   = "IN1 IN2 CF  N                                                   \0";
+	char outNames[4*MAXOUT+1] = "LP1 LP2                                                         \0";
+//               "        \0";
+	char name[9]="Buttwlpf\0";
+	
+	modIns[id]     = 4;
+	modOuts[id]    = 2;
+	
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
 
 void module_Filter2(int id) {
 	// Moog 24 dB/oct resonant lowpass VCF
@@ -1476,9 +1546,10 @@ void moduleRegistration(void) {
 	regModule_Delay(16);
 	regModule_BD(17);
 	regModule_Derive(18);
-	regModule_Sequencer(19);
+	regModule_Bwlpf(19);
+	regModule_Sequencer(20);
 	
-	numberOfModules=20;
+	numberOfModules=21;
 
 	return;
 }
