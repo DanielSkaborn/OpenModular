@@ -1,4 +1,5 @@
-![Picture](openModular_logo.svg)
+
+![](openModular_logo.svg?raw=true)
 #OpenModular
 ##Software Defined Modular Synth
 This is a software defined modular synth written in C. It it portable to different platforms, and for now there are HAL (hardware abstraction layer) for ALSA. <br />
