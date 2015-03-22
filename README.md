@@ -1,4 +1,4 @@
-![Picture](https://github.com/DanielSkaborn/OpenModular/blob/master/openModular_logo.svg)
+![Picture](openModular_logo.svg)
 #OpenModular
 Virtual Modular Synth
 
