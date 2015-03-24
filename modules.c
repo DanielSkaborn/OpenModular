@@ -846,8 +846,6 @@ void module_Filter1(int id) {
 		lastcin1 = AIN2;
 		resonance = (temp+1.0)*0.5; // 0 to 1
 
-//		printf("F1: AIN1=%f CF=%f %fHz AIN2=%f res=%f\n",AIN1, frequency, freqinhz, AIN2, resonance);
-
 		q = 1.0 - frequency;
 		p = frequency + 0.8 * frequency * q;
 		f = p + p - 1.0;
@@ -1054,7 +1052,6 @@ void module_Oscilator1(int id) {
 	
 	if (NOTE!=lastnote) {
 		lastnote=NOTE;
-	
 		// lookuptable, basictone to frequency (HZ)
 		toneFreq = noteToFreqLUT[NOTE + (int)(AIN2*12)];
 	}
@@ -1319,7 +1316,8 @@ void module_WavetableOsc1(int id) {
 	static int switcher=0;
 	static unsigned char lastnote=0;
 	static float toneFreq=20.1;
-	static float phase = 0.0;
+	static float phase;
+	static float phasesin1, phasesin2;
 	float freq;
 	float temp;
 	unsigned char lowbit;
@@ -1328,7 +1326,7 @@ void module_WavetableOsc1(int id) {
 		switcher = 0;
 		lastnote = 0;
 		toneFreq=20.1;
-		phase = 0.0;
+		phasesin1 = phasesin2 = phase = 0.0;
 		return;
 	}
 
@@ -1349,6 +1347,19 @@ void module_WavetableOsc1(int id) {
 	lowbit = (unsigned char)(temp*255);
 	AOUT1 = ((float)(lowbit))/255.0;
 	
+	phasesin1 = phasesin1 + (8192.0/SAMPLERATEF * (freq+AIN0*5.0) );
+	phasesin2 = phasesin2 + (8192.0/SAMPLERATEF * (freq+AIN1*5.0) );
+	if (phasesin1 > 8192.0) {
+		phasesin1 = phasesin1 - 8192.0;
+		if (AIN2 > 0) // sync on
+			phasesin2=0;
+	}
+	if (phasesin2 > 8192.0) {
+		phasesin2 = phasesin2 - 8192.0;
+	}
+	AOUT2 = sinustable[(int)(phasesin1)];
+	AOUT3 = sinustable[(int)(phasesin2)];
+	
 	return;
 }
 
@@ -1365,13 +1376,13 @@ void regModule_WavetableOsc1(int id) {
 
 
 //                              "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
-	char inNames[4*MAXIN+1]   = "TUNE                                                            \0";
-	char outNames[4*MAXOUT+1] = "OUT 8BIT                                                        \0";
+	char inNames[4*MAXIN+1]   = "TUN1TUN2SYNC                                                    \0";
+	char outNames[4*MAXOUT+1] = "OUT 8BITSIN SINS                                                \0";
 //               "        \0";
 	char name[9]="WaveTab1\0";
 	
-	modIns[id]     = 1;
-	modOuts[id]    = 2;
+	modIns[id]     = 3;
+	modOuts[id]    = 4;
 	
 	copymodstrings(id, name, inNames, outNames);
 	return;
