@@ -1,7 +1,4 @@
-Todo status: 20150218
-RPi UART setup for MIDI not working properly, needs to be fixed
-MIDI parser not tested
-
+Todo status: 
 change MIDI SYX parsing to allow nestling in standard MIDI messages
-Write documentation
+Sometimes the RPi ALSA output hangs, probably it can be fixed by close and open the ALSA device.
 
