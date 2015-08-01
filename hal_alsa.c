@@ -16,7 +16,7 @@
 #define SAMPLERATEF		44100.0f
 
 #define MIDIDEVICE		"/dev/snd/midiC1D0"
-#define ALSADEVICE      "plughw:0,0"
+#define ALSADEVICE      	"plughw:0,0"
 
 int MIDIin_d;
 int MIDIout_d;
@@ -114,13 +114,14 @@ int main(void)
 	MIDIout_d = open(MIDIDEVICE,O_WRONLY);
 	if (MIDIin_d==-1) { printf("could not open MIDI in %s\n", MIDIDEVICE); exit(0); }
 	if (MIDIout_d==-1) { printf("could not open MIDI out %s\n", MIDIDEVICE); exit(0); }
-	
+
 	flags = fcntl(MIDIin_d, F_GETFL, 0);
 	fcntl(MIDIin_d, F_SETFL, flags | O_NONBLOCK);
 
     // Init ALSA sound device
 
  	if ( snd_pcm_open(&handle, ALSADEVICE, SND_PCM_STREAM_PLAYBACK, 0)<0 ) {
+		printf("PCM stream playback init failed!\n");
 		exit(0);
 	}
 	snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, SAMPLERATE, 0, 20000 );
@@ -128,6 +129,8 @@ int main(void)
 	mainOpenModular();
 
 	snd_pcm_close(handle);
+
+	printf("ALSI init done\n");
 	return 0;
 }
 
