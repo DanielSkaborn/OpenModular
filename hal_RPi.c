@@ -108,20 +108,19 @@ volatile unsigned int* pwmR;
 /** UART Register set */
 volatile unsigned int* uartR;
 
-
-
-int MIDIdataavail(void) { // pollcheck of MIDI input
-    if((uartR[UART0_FR]&0x10)==0)
-		return 1;
-	else
-		return 0;
-}
-unsigned char MIDIrcv(void) {
-	return uartR[UART0_DR];
-}
 void MIDIout(unsigned char outbuf) {
 	
 	return;
+}
+
+int MIDIin(unsigned char *data) {
+	if((uartR[UART0_FR]&0x10)==0) {
+		*data = (unsigned char)(uartR[UART0_DR]);
+		return 1;
+	} else {
+		return 0;
+	}
+	return 0;
 }
 
 int AudioFIFOfull(void) {
@@ -142,9 +141,9 @@ void AudioOut(void) {
 	volatile static int c;
 	
 	int out;
-	out = (int)(audioPatchBus[0]*0x800)+0x800;
+	out = ((int)(patchBus[OUTL][togglerOut]*0x800)+0x800) & 0xFFF;
 	pwmR[PWM_FIF1] = out;
-	out = (int)(audioPatchBus[1]*0x800)+0x800;
+	out = ((int)(patchBus[OUTR][togglerOut]*0x800)+0x800) & 0xFFF;
 	pwmR[PWM_FIF1] = out;
 
 	c++;
@@ -161,8 +160,10 @@ void AudioOut(void) {
 	return;
 }
 
+	uint32_t controlRegister;
+
 int main(void) {
-//	asm volatile("ldr sp, =(128 * (1024 * 1024))\n");
+	
 	asm volatile("mov sp, #0x8000\n");                 
 	asm volatile("mrc p15, 0, r0, c1, c0, 2\n");
 	asm volatile("orr r0, r0, #0x300000\n");             // single precision 
@@ -170,6 +171,11 @@ int main(void) {
 	asm volatile("mcr p15, 0, r0, c1, c0, 2\n");
 	asm volatile("mov r0, #0x40000000\n");               // Enable FPU 
 	asm volatile("fmxr fpexc,r0\n");
+
+	asm volatile ("MRC p15, 0, %0, c1, c0, 0" : "=r" (controlRegister)); // enable cache
+	controlRegister|=0x1800; 
+	asm volatile ("MCR p15, 0, %0, c1, c0, 0" :: "r" (controlRegister));
+
 	
 
 	/* Assign the address of the GPIO peripheral (Using ARM Physical Address) */

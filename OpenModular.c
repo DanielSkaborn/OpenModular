@@ -6,7 +6,9 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
+#include <math.h>
 #include <stdint.h>
+
 
 // receive MIDIchannel-1 (0 to 15)
 #define CHANNEL 0
@@ -16,12 +18,104 @@
 
 void mainOpenModular(void);
 
+//#define TEXTEDIT
+//#define TARGET_RPI
+
+
 #include "OpenModularVarsM.h"
-//#include "hal_text.c"
-//#include "hal_RPi.c"
-//#include "hal_file.c"
+#ifdef TEXTEDIT
+#include "modEditor.c"
+#endif
+
+#ifdef BAREMETAL_RPI
+#include "hal_RPi.c"
+#endif
+
+#ifdef ALSA_RPI
+#include "hal_RPi_alsa.c"
+#endif
+
+#ifdef ALSA
 #include "hal_alsa.c"
+#endif
+
+//#include "hal_text.c"
+//#include "hal_file.c"
+
 #include "modules.c"
+
+FILE *infil;
+FILE *utfil;
+
+void storePatch(void) {
+	char tmp[100];
+
+	infil=fopen("counter.cnt","r");
+	if (infil==NULL) {
+		printf("No counterfile, will start from program-zero.\n");
+		filecounter=0;
+	} else {
+		fscanf(infil, "%d", &filecounter);
+		fclose(infil);
+	}
+
+	sprintf(tmp, "%03d.omo", filecounter);
+	utfil = fopen(tmp,"wb");
+	fwrite(patchBus, 4, NOPATCHBUS*2, utfil);
+	fwrite(patchIn, 4, MAXMODS*MAXIN, utfil);
+	fwrite(patchOut, 4, MAXMODS*MAXOUT, utfil);
+	fwrite(patchGate, 4, MAXMODS, utfil);
+	fwrite(patchNote, 4, MAXMODS, utfil);
+	fclose(utfil);
+
+	filecounter++;
+	utfil = fopen("counter.cnt","w");
+	fprintf(utfil, "%d\n",filecounter);
+	fclose(utfil);
+	printf("Store completed\n");
+	return;
+}
+
+void outputsToBus(void) {
+	int i, ii, n;
+
+	n=121;
+	for (i=0;i<numberOfModules;i++) {
+		for(ii=0;ii<modOuts[i];ii++) {
+			patchOut[i][ii]=n;
+			n++;
+		}
+	}
+}
+
+void loadPatch(int prg) {
+	char tmp[100];
+	infil=fopen("counter.cnt","rb");
+	if (infil==NULL) {
+		printf("No counterfile.\n");
+		filecounter=0;
+		return;
+	} else {
+		fscanf(infil, "%d", &filecounter);
+		fclose(infil);
+	}
+
+	if (prg > (filecounter-1)) {
+		printf("No stored patch at program %d\n",prg);
+	} else {
+		sprintf(tmp, "%03d.omo", prg);
+		infil = fopen(tmp,"rb");
+		fread(patchBus, 4, NOPATCHBUS*2, infil);
+		fread(patchIn, 4, MAXMODS*MAXIN, infil);
+		fread(patchOut, 4, MAXMODS*MAXOUT, infil);
+		fread(patchGate, 4, MAXMODS, infil);
+		fread(patchNote, 4, MAXMODS, infil);
+		fclose(infil);
+	}
+	
+	outputsToBus(); // correct all eventual messups with module outputs to bus...
+	return;
+}
 
 void sendModulesInfo(void) {
 	int id,i;
@@ -78,9 +172,9 @@ void sendPatchDump(void) {
 
 void parse(unsigned char inbuf){
 	static int mps=0;
-	static char tmp1=0, tmp2=0;
+	static char tmp1=0, tmp2=0, tmp3=0;
+//	static char lastctrl;
 
-	//printf("parse 0x%02x\n",inbuf);
 	switch (mps) {
 		case 0: // wait for any data
 			if (inbuf == (0xB0+CHANNEL)) mps=1; // CC
@@ -100,8 +194,14 @@ void parse(unsigned char inbuf){
 				gate[0]=0;
 				gate[1]=0;
 			} else {
-//				printf("cc %d\n",tmp1);
-				patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
+				if ((tmp1<121)&& (inbuf<0x80)) {
+//					if(inbuf==0x10) printf("bingo!\n");
+//					if(tmp1!=lastctrl) {
+//						printf("CC-%d\n",tmp1);
+//						lastctrl=tmp1;
+//					}
+					patchBus[(int)(tmp1)][togglerIn]=(float)(inbuf)/64.0-1.0;
+				}
 			}
 			mps=0;
 			break;
@@ -139,7 +239,8 @@ void parse(unsigned char inbuf){
 			break;
 
 		case 7: // Program change
-			//preset_program = inbuf;
+			if (inbuf<0x80)
+				loadPatch(inbuf);
 			mps=0;
 			break;
 
@@ -149,7 +250,7 @@ void parse(unsigned char inbuf){
 			break;
 		case 9:
 			pitchBendRaw = tmp1 + (inbuf * 0x100);
-			pitchBend = (float)(pitchBendRaw-16382) / 16382.0;
+			patchBus[120][togglerIn] = (float)(pitchBendRaw-16382) / 16382.0;
 			mps=0;
 			break;
 
@@ -167,10 +268,7 @@ void parse(unsigned char inbuf){
 			break;
 		case 13:
 			mps=0;
-			if (inbuf == 0x01) mps=14; // Set AudioPatchIn
-			if (inbuf == 0x02) mps=17; // Set AudioPatchOut
-			if (inbuf == 0x03) mps=20; // Set CtrlPatchIn
-			if (inbuf == 0x04) mps=23; // Set CtrlPatchOut
+			if (inbuf == 0x01) mps=14; // Set PatchIn
 			if (inbuf == 0x05) mps=26; // Request Patch Dump
 			if (inbuf == 0x06) mps=27; // Request Modules Information
 
@@ -179,24 +277,16 @@ void parse(unsigned char inbuf){
 			tmp1=inbuf; // moduleID
 			mps=15;
 			break;
-		case 15: // TODO CHANGE TO HIGHBYTE / LOWBYTE
+		case 15:
 			tmp2=inbuf; // moduleInPort
 			mps=16;
 			break;
 		case 16:
-			patchIn[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf);
-			mps=0;
+			tmp3=inbuf; // patchnuber high 7bits
+			mps=17;
 			break;
-		case 17: // Set PatchOut
-			tmp1=inbuf; // moduleID
-			mps=18;
-			break;
-		case 18:
-			tmp2=inbuf; // moduleInPort
-			mps=19;
-			break;
-		case 19:
-			patchOut[(int)(tmp1)][(int)(tmp2)] = (unsigned char)(inbuf); // TODO CHANGE TO HIGH7BITS andLOW7BITS
+		case 17: // patchnumber low 7bits
+			patchIn[(int)(tmp1)][(int)(tmp2)] = (inbuf & 0x7F) + (tmp3*0x80);		
 			mps=0;
 			break;
 		case 26: // Request Of Patch Dump
@@ -246,28 +336,27 @@ void clearPatches(void) {
 	return;
 }
 
+
+
 void mainOpenModular(void) {
-	int i, ii;
-	int n=120;
+	int i;
+
 	unsigned char mididata;
+
+	printf("Start OpenModular\n");
 	makeNoteToFreqLUT(0);
 
 	clearPatches();
 	clearBusses();
-	
 	moduleRegistration();
-		
-	for (i=0;i<numberOfModules;i++) {
-		for(ii=0;ii<modOuts[i];ii++) {
-			patchOut[i][ii]=n;
-			n++;
-		}
-	}
-	presetPatches(0);
-
+	loadPatch(0);
+	
+#ifdef TEXTEDIT
 	editor();
-	printf("Enter OpenModular audio process loop\n");
+#endif
+
 	while(1) { // forever loop
+
 		if( MIDIin(&mididata)==1 ) {
 			parse(mididata);
 		}
@@ -281,8 +370,10 @@ void mainOpenModular(void) {
 				moduleRegistry[i](i);
 			}
 			AudioOut();
-		} else {
 		}
+#ifdef TEXTEDIT
+		editor_doparams();
+#endif		
 	}
 	return; // never reached
 }

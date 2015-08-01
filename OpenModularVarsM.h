@@ -6,7 +6,7 @@
 // GNU GENERAL PUBLIC LICENSE Version 2
 // Daniel Skaborn
 
-#define MAXMODS		16
+#define MAXMODS		32
 #define MAXIN		16
 #define MAXOUT		16
 #define NOPATCHBUS 256
@@ -56,30 +56,32 @@
 
 
 // These are the 'live' bus signals
-//volatile unsigned char	ctrlPatchBus[NOCTRLPATCHBUS];
-volatile float 			patchBus[NOPATCHBUS][2]; // for every sample step last index is toggles
-volatile float			pitchBend;
-volatile int			pitchBendRaw;
-volatile unsigned char	gate[3];
-volatile unsigned char	note[3];
-volatile int			togglerIn, togglerOut;
+//unsigned char	ctrlPatchBus[NOCTRLPATCHBUS];
+float 			patchBus[NOPATCHBUS][2]; // for every sample step last index is toggles
+float			pitchBend;
+int			pitchBendRaw;
+unsigned char	gate[3];
+unsigned char	note[3];
+int			togglerIn, togglerOut;
 
 // These defines the patch of the modular
-volatile int	patchIn[MAXMODS][MAXIN];
-volatile int	patchOut[MAXMODS][MAXOUT];
-volatile int	patchGate[MAXMODS];
-volatile int	patchNote[MAXMODS];
+int	patchIn[MAXMODS][MAXIN];
+int	patchOut[MAXMODS][MAXOUT];
+int	patchGate[MAXMODS];
+int	patchNote[MAXMODS];
 
 // Modules information fields
 typedef void (*modulefunc_t)(int id);
-volatile modulefunc_t	moduleRegistry[MAXMODS];
-volatile char 	modName[MAXMODS][9];
-volatile unsigned char	modIns[MAXMODS];
-volatile unsigned char	modOuts[MAXMODS];	
-volatile unsigned char	modInsName[MAXMODS][4*MAXIN+1];
-volatile unsigned char	modOutsName[MAXMODS][4*MAXOUT+1];
+modulefunc_t	moduleRegistry[MAXMODS];
+char 	modName[MAXMODS][9];
+unsigned char	modIns[MAXMODS];
+unsigned char	modOuts[MAXMODS];	
+unsigned char	modInsName[MAXMODS][4*MAXIN+1];
+unsigned char	modOutsName[MAXMODS][4*MAXOUT+1];
 
-volatile int 	numberOfModules;
+int filecounter;
+
+int 	numberOfModules;
 
 float noteToFreqLUT[128];
 

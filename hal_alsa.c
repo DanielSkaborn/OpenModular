@@ -8,7 +8,6 @@
 #include "/usr/include/alsa/asoundlib.h"
 #include "/usr/include/alsa/pcm.h"
 #include <pthread.h>
-#include "modEditor.c"
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
