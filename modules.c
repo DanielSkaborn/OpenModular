@@ -28,11 +28,11 @@ void copymodstrings(int id, char* name, char* inNames, char* outNames){
 
 void module_JanostDCF(int id) {
 	static int32_t f,q,vi,vo,t1,t2,t3,t4,t5,t6,t7,t8;
-	
+
 	f = (AIN1+1.0) * 32767;
-	q = (AIN1+1.0) * 32767;
+	q = (AIN2+1.0) * 32767;
 	vi = (int)(AIN0*32767);
-	
+
 	vo = ((vo * (65536 - f)) + (t1 * f)) / 65536;
 	t1 = ((t1 * (65536 - f)) + (t2 * f)) / 65536;
 	t2 = ((t2 * (65536 - f)) + (t3 * f)) / 65536;
@@ -44,7 +44,7 @@ void module_JanostDCF(int id) {
 	t8 = vi-((vo*q)/65536);
 	if (vo>32767) vo= 32767;
 	if (vo<-32767) vo= -32767;
-	
+
 	AOUT0 = vo / 32767.0;
 	return;
 }
@@ -1580,15 +1580,16 @@ void moduleRegistration(void) {
 	regModule_Oscilator2(1);
 	regModule_Smoothie(2);
 	regModule_SampleAndHold(3);
-	regModule_ADSR(4);
+	regModule_ADSR1(4);
 	regModule_Gain(5);
 	regModule_Filter1(6);
 	regModule_Filter2(7);
-	regModule_LFO(8);
+	regModule_LFO1(8);
 	regModule_LFO2(9);
 	regModule_Gate2Bus(10);
 	regModule_Output(11);
-	regModule_Sequencer(12);
+//	regModule_Sequencer(12);
+	regModule_Noise(12);
 	regModule_JanostDCF(13);
 
 	numberOfModules=14;
