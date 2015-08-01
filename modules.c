@@ -25,6 +25,45 @@ void copymodstrings(int id, char* name, char* inNames, char* outNames){
 	return;
 }
 
+void module_JanostDCF(int id) {
+	static int32_t f,q,vi,vo,t1,t2,t3,t4,t5,t6,t7,t8;
+	
+	f = (AIN1+1.0) * 32767;
+	q = (AIN1+1.0) * 32767;
+	vi = (int)(AIN0*32767);
+	
+	vo = ((vo * (65536 - f)) + (t1 * f)) / 65536;
+	t1 = ((t1 * (65536 - f)) + (t2 * f)) / 65536;
+	t2 = ((t2 * (65536 - f)) + (t3 * f)) / 65536;
+	t3 = ((t3 * (65536 - f)) + (t4 * f)) / 65536;
+	t4 = ((t4 * (65536 - f)) + (t5 * f)) / 65536;
+	t5 = ((t5 * (65536 - f)) + (t6 * f)) / 65536;
+	t6 = ((t6 * (65536 - f)) + (t7 * f)) / 65536;
+	t7 = ((t7 * (65536 - f)) + (t8 * f)) / 65536;
+	t8 = vi-((vo*q)/65536);
+	if (vo>32767) vo= 32767;
+	if (vo<-32767) vo= -32767;
+	
+	AOUT0 = vo / 32767.0;
+	return;
+}
+
+void regModule_JanostDCF(int id) {
+	moduleRegistry[id] = module_JanostDCF;
+
+//                               "0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  \0"
+	char inNames[4*MAXIN+1]    = "IN  F   Q                                                       \0"; 	
+	char outNames[4*MAXOUT+1]  = "OUT                                                             \0";
+//               "        \0";
+	char name[9]="Jano-DCF\0";
+
+	modIns[id]      = 3;
+	modOuts[id]     = 1;
+
+	copymodstrings(id, name, inNames, outNames);
+	return;
+}
+
 void module_Gain(int id) { 
 	AOUT0 = AIN0 * AIN1;
 	AOUT1 = AIN2 * AIN3;
@@ -815,9 +854,10 @@ void moduleRegistration(void) {
 	regModule_LFO2(9);
 	regModule_Gate2Bus(10);
 	regModule_Output(11);
-	//regModule_Sequencer(12);
+	regModule_Sequencer(12);
+	regModule_JanostDCF(13);
 
-	numberOfModules=12;
+	numberOfModules=14;
 
 	return;
 }
