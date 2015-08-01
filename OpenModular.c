@@ -94,6 +94,7 @@ void loadPatch(int prg) {
 	if (infil==NULL) {
 		printf("No counterfile.\n");
 		filecounter=0;
+		outputsToBus();
 		return;
 	} else {
 		fscanf(infil, "%d", &filecounter);
@@ -101,6 +102,7 @@ void loadPatch(int prg) {
 	}
 
 	if (prg > (filecounter-1)) {
+		outputsToBus();
 		printf("No stored patch at program %d\n",prg);
 	} else {
 		sprintf(tmp, "%03d.omo", prg);
@@ -350,7 +352,7 @@ void mainOpenModular(void) {
 	clearBusses();
 	moduleRegistration();
 	loadPatch(0);
-	
+
 #ifdef TEXTEDIT
 	editor();
 #endif
@@ -373,7 +375,7 @@ void mainOpenModular(void) {
 		}
 #ifdef TEXTEDIT
 		editor_doparams();
-#endif		
+#endif
 	}
 	return; // never reached
 }
